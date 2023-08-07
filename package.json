@@ -1,0 +1,51 @@
+{
+  "name": "gitpear",
+  "version": "1.0.0",
+  "description": "p2p transport helpers, daemon and cli for git based on holepunch/hypercore stack",
+  "scripts": {
+    "test": "GIT_PEAR=./.test_home brittle ./test/**/*.test.js --coverage --bail",
+    "types": "tsc src/*.js --declaration --allowJs --emitDeclarationOnly --outDir types --target es2015",
+    "lint": "standard --fix",
+    "preinstall": "./bin/preinstall.sh",
+    "set-test": "tar xzf test_home.tar.gz -C . "
+  },
+  "bin": {
+    "gitpeard": "./src/gitpeard.js",
+    "git-remote-pear": "./src/git-remote-pear.js",
+    "gitpear": "./src/cli.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dzdidi/gitpear.git"
+  },
+  "keywords": [
+    "p2p",
+    "pear2pear",
+    "peer2peer",
+    "git",
+    "transport",
+    "holepunch",
+    "hypercore"
+  ],
+  "author": "dzdidi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dzdidi/gitpear/issues"
+  },
+  "homepage": "https://github.com/dzdidi/gitpear#readme",
+  "devDependencies": {
+    "@hyperswarm/testnet": "^3.1.4",
+    "brittle": "^3.3.2",
+    "standard": "^17.1.0",
+    "typescript": "^5.1.3"
+  },
+  "dependencies": {
+    "chokidar": "^3.5.3",
+    "commander": "^11.0.0",
+    "corestore": "^6.10.1",
+    "hyperdrive": "^11.5.3",
+    "hyperswarm": "^4.5.1",
+    "protomux-rpc": "^1.4.1",
+    "random-access-memory": "^6.2.0"
+  }
+}
