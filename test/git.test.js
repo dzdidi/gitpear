@@ -2,7 +2,7 @@ const test = require('brittle')
 const fs = require('fs')
 const path = require('path')
 
-const appHome = require('../src/appHome.js')
+const home = require('../src/home.js')
 
 const git = require('../src/git.js')
 
@@ -51,15 +51,15 @@ test('git - uploadPack (w have)', { skip: true }, async t => {
 })
 
 test('git - createBareRepo', async t => {
-  t.absent(fs.existsSync(path.join(appHome.APP_HOME, 'test-git', 'code')))
-  appHome.createAppFolder('test-git')
+  t.absent(fs.existsSync(path.join(home.APP_HOME, 'test-git', 'code')))
+  home.createAppFolder('test-git')
 
-  t.absent(fs.existsSync(path.join(appHome.APP_HOME, 'test-git', 'code', 'HEAD')))
+  t.absent(fs.existsSync(path.join(home.APP_HOME, 'test-git', 'code', 'HEAD')))
   await git.createBareRepo('test-git')
 
-  t.ok(fs.existsSync(path.join(appHome.APP_HOME, 'test-git', 'code', 'HEAD')))
+  t.ok(fs.existsSync(path.join(home.APP_HOME, 'test-git', 'code', 'HEAD')))
 
   t.teardown(() => {
-    fs.rmdirSync(path.join(appHome.APP_HOME, 'test-git'), { recursive: true })
+    fs.rmSync(path.join(home.APP_HOME, 'test-git'), { recursive: true })
   })
 })

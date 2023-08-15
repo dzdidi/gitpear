@@ -1,10 +1,10 @@
 const Hyperdrive = require('hyperdrive')
 
 const git = require('./git.js')
-const appHome = require('./appHome.js')
+const home = require('./home.js')
 
 module.exports = async function setState (store, drives = {}) {
-  const repos = appHome.list(true)
+  const repos = home.list(true)
 
   const announcedRefs = {}
   const repositories = {}
@@ -15,14 +15,14 @@ module.exports = async function setState (store, drives = {}) {
       await drives[repo].ready()
     }
 
-    const ls = await git.lsPromise(appHome.getCodePath(repo))
+    const ls = await git.lsPromise(home.getCodePath(repo))
 
     repositories[repo] = {}
     for (const ref in ls) {
       repositories[repo][ref] = ls[ref]
       announcedRefs[ls[ref]] = repo
 
-      const localPackStream = git.uploadPack(appHome.getCodePath(repo), ls[ref])
+      const localPackStream = git.uploadPack(home.getCodePath(repo), ls[ref])
       const driveStream = drives[repo].createWriteStream(`/packs/${ls[ref]}.pack`)
       localPackStream.on('ready', () => localPackStream.stdout.pipe(driveStream))
     }

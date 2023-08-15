@@ -3,7 +3,7 @@ const setState = require('../src/state.js')
 const Corestore = require('corestore')
 const RAM = require('random-access-memory')
 
-const repoNames = ['foo', 'bar', 'zar']
+const repoNames = ['foo', 'bar']
 
 test('setState', async t => {
   const res = await setState(new Corestore(RAM))

@@ -1,4 +1,4 @@
-const { getCodePath } = require('./appHome')
+const { getCodePath } = require('./home')
 const { spawn } = require('child_process')
 
 async function lsPromise (url) {

@@ -5,12 +5,12 @@ const crypto = require('hypercore-crypto')
 
 const RPC = require('./rpc.js')
 const setState = require('./state.js')
-const appHome = require('./appHome.js')
+const home = require('./home.js')
 
 const Corestore = require('corestore')
 
 ;(async () => {
-  const keyPair = appHome.getKeyPair()
+  const keyPair = home.getKeyPair()
   const swarm = new Hyperswarm({ keyPair })
 
   const store = new Corestore(RAM)
@@ -18,7 +18,7 @@ const Corestore = require('corestore')
   swarm.join(crypto.discoveryKey(keyPair.publicKey))
   await swarm.flush()
 
-  console.log('Public key:', appHome.readPk())
+  console.log('Public key:', home.readPk())
 
   let state = await setState(store)
   let { announcedRefs, repositories, drives } = state
@@ -28,7 +28,7 @@ const Corestore = require('corestore')
 
   let rpc = new RPC(announcedRefs, repositories, drives)
 
-  appHome.watch(async (event, path) => {
+  home.watch(async (event, path) => {
     state = await setState(store, drives)
     announcedRefs = state.announcedRefs
     repositories = state.repositories

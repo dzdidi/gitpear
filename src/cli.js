@@ -8,7 +8,7 @@ const program = new commander.Command()
 const path = require('path')
 const fs = require('fs')
 
-const appHome = require('./appHome')
+const home = require('./home')
 const git = require('./git')
 
 const pkg = require('../package.json')
@@ -30,12 +30,12 @@ program
     }
 
     const name = fullPath.split(path.sep).pop()
-    if ((appHome.isInitialized(name))) {
+    if ((home.isInitialized(name))) {
       console.error(`${name} is already initialized`)
       process.exit(1)
     }
 
-    appHome.createAppFolder(name)
+    home.createAppFolder(name)
     console.log(`Added project "${name}" to gitpear`)
     await git.createBareRepo(name)
     console.log(`Created bare repo for "${name}"`)
@@ -43,7 +43,7 @@ program
     console.log(`Added git remote for "${name}" as "pear"`)
 
     if (options.share) {
-      appHome.shareAppFolder(name)
+      home.shareAppFolder(name)
       console.log(`Shared "${name}" project`)
       // push?
     }
@@ -55,8 +55,8 @@ program
   .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
   .action(async (p, options) => {
     const name = path.resolve(p).split(path.sep).pop()
-    if ((appHome.isInitialized(name))) {
-      appHome.shareAppFolder(name)
+    if ((home.isInitialized(name))) {
+      home.shareAppFolder(name)
       console.log(`Shared "${name}" project`)
       return
     }
@@ -71,8 +71,8 @@ program
   .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
   .action((p, options) => {
     const name = path.resolve(p).split(path.sep).pop()
-    if ((appHome.isInitialized(name))) {
-      appHome.unshareAppFolder(name)
+    if ((home.isInitialized(name))) {
+      home.unshareAppFolder(name)
       console.log(`Unshared "${name}" project`)
 
       return
@@ -87,14 +87,14 @@ program
   .description('list all gitpear repos')
   .option('-s, --shared', 'list only shared repos')
   .action((p, options) => {
-    appHome.list(options.opts().shared).forEach(name => console.log(name))
+    home.list(options.opts().shared).forEach(name => console.log(name))
   })
 
 program
   .command('key')
   .description('get a public key of gitpear')
   .action((p, options) => {
-    console.log('Public key:', appHome.readPk())
+    console.log('Public key:', home.readPk())
   })
 
 program
@@ -104,8 +104,8 @@ program
   .option('-k, --stop', 'stop daemon')
   .action((p, options) => {
     if (options.opts().start) {
-      if (appHome.getDaemonPid()) {
-        console.error('Daemon already running with PID:', appHome.getDaemonPid())
+      if (home.getDaemonPid()) {
+        console.error('Daemon already running with PID:', home.getDaemonPid())
         process.exit(1)
       }
 
@@ -113,23 +113,23 @@ program
         detached: true,
         stdio: [
           'ignore',
-          appHome.getOutStream(),
-          appHome.getErrStream()
+          home.getOutStream(),
+          home.getErrStream()
         ]
       })
       console.log('Daemon started. Process ID:', daemon.pid)
-      appHome.storeDaemonPid(daemon.pid)
+      home.storeDaemonPid(daemon.pid)
       daemon.unref()
     } else if (options.opts().stop) {
-      if (!appHome.getDaemonPid()) {
+      if (!home.getDaemonPid()) {
         console.error('Daemon not running')
         process.exit(1)
       }
 
-      const pid = appHome.getDaemonPid()
+      const pid = home.getDaemonPid()
       process.kill(pid)
 
-      appHome.removeDaemonPid()
+      home.removeDaemonPid()
       console.log('Daemon stopped. Process ID:', pid)
     } else {
       console.error('No option provided')
