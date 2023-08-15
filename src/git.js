@@ -23,23 +23,25 @@ async function lsPromise (url) {
 
 async function createBareRepo (name) {
   const init = spawn('git', ['init', '--bare'], { env: { GIT_DIR: getCodePath(name) } })
-  init.stderr.pipe(process.stderr)
-  return new Promise((resolve, reject) => {
-    init.on('close', (code) => {
-      if (code) return reject(new Error(`git init exited with code ${code}`))
-
-      resolve()
-    })
-  })
+  return await doGit(init)
 }
 
 async function addRemote (name) {
   const init = spawn('git', ['remote', 'add', 'pear', getCodePath(name)])
-  init.stderr.pipe(process.stderr)
+  return await doGit(init)
+}
+
+async function push (branch = 'master') {
+  const push = spawn('git', ['push', 'pear', branch])
+  return await doGit(push)
+}
+
+async function doGit (child) {
+  child.stderr.pipe(process.stderr)
   return new Promise((resolve, reject) => {
-    init.on('close', (code) => {
+    child.on('close', (code) => {
       if (code) {
-        return reject(new Error(`git remote add exited with code ${code}`))
+        return reject(new Error(`git exited with code ${code}`))
       }
 
       return resolve()
@@ -178,4 +180,4 @@ async function unpackStream (packStream) {
   })
 }
 
-module.exports = { lsPromise, uploadPack, unpackFile, unpackStream, createBareRepo, addRemote }
+module.exports = { lsPromise, uploadPack, unpackFile, unpackStream, createBareRepo, addRemote, push }

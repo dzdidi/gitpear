@@ -44,8 +44,8 @@ program
 
     if (options.share) {
       home.shareAppFolder(name)
+      await git.push()
       console.log(`Shared "${name}" project`)
-      // push?
     }
   })
 
@@ -57,6 +57,7 @@ program
     const name = path.resolve(p).split(path.sep).pop()
     if ((home.isInitialized(name))) {
       home.shareAppFolder(name)
+      await git.push()
       console.log(`Shared "${name}" project`)
       return
     }
