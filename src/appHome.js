@@ -28,7 +28,7 @@ function isShared (name) {
 
 function list (sharedOnly) {
   const repos = fs.readdirSync(APP_HOME)
-  if (!sharedOnly) return repos.filter(r => !r.startsWith('.'))
+  if (!sharedOnly) return repos.filter(r => !r.startsWith('.') && isInitialized(r))
 
   return repos.filter(repo => isShared(repo))
 }
