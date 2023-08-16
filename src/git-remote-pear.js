@@ -32,7 +32,15 @@ swarm.on('connection', async (socket) => {
 
   const reposRes = await rpc.request('get-repos')
   const repositories = JSON.parse(reposRes.toString())
-  if (!repositories) process.exit(1)
+  if (!repositories) {
+    console.error('Failed to retrieve repositories')
+    process.exit(1)
+  }
+
+  if (!repositories[repoName]) {
+    console.error('Failed to retrieve repository')
+    process.exit(1)
+  }
 
   const driveKey = Buffer.from(repositories[repoName], 'hex')
   if (!driveKey) {
