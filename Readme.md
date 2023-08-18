@@ -42,3 +42,50 @@ All data will be persisted in application directory (default `~/.gitpear`). To c
 * `gitpear unshare <path>` -  stop sharing repository
 
 * `gitpear list [-s, --shared]` - list all or (only shared) repositories
+
+## Usage example
+
+Please not this is only remote helper and its intention is only to enable direct `clone|fetch|pull` of repository hosted on private computer.
+
+Collaboration is possible however with the following flow between Alice and Bob in a pure peer-to-peer manner of git.
+
+1. Both Alice and Bob have gitpear installed and Alice wants Bob to help her with repo Repo
+2. Alice steps are:
+```
+cd Repo
+gitpear init -s
+gitpear list
+# outputs:
+# Repo    pear://<Alice public key>/Repo
+```
+
+3. Bob's steps:
+```
+git clone pear://<Alice public key>/Repo
+cd Repo
+gitpear init -s
+git checkout -b feature
+# implement feature
+git commit -m 'done'
+git push pear feature
+gitpear list 
+# outputs:
+# Repo    pear://<Bob public key>/Repo
+```
+
+4. Alice's steps
+```
+git checkout master
+git remote add bob pear://<Bob public key>/Repo
+git fetch bob
+git pull
+git merge feature
+git push pear master
+```
+
+5. Bob's steps are
+```
+git checkout master
+git fetch origin
+git pull
+```
