@@ -8,6 +8,25 @@ gitpear creates local [bare repository](https://git-scm.com/docs/git-init#Docume
 
 To enable clone or fetch or pull using `git <clone|fetch|pull> pear:<public key>/<repo name>`. It implements [git remote helper](https://www.git-scm.com/docs/gitremote-helpers) that uses [hyperswarm](https://docs.holepunch.to/building-blocks/hyperswarm) for networking in order to directly connect to peer. After connection is initialized it sends RPC request to retrieve list of repositories, clone corresponding pack files and unpack them locally.
 
+
+## Installation
+
+It is necessary for corresponding binaries to be in `$PATH`, thus gitpear needs to be installed globally
+
+### From remote
+```sh
+npm install -g git@github.com:dzdidi/gitpear.git
+```
+
+### From local
+```sh
+git clone git@github.com:dzdidi/gitpear.git
+cd gitpear
+npm link
+```
+
+NOTE: application home directory will be created in `~/.gitpear` - this may require `sudo`
+
 ##
 
 All data will be persisted in application directory (default `~/.gitpear`). To change it. Provide environment variable `GIT_PEAR`
