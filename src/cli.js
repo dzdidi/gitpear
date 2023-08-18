@@ -13,7 +13,7 @@ const git = require('./git')
 
 const pkg = require('../package.json')
 program
-  .name('gitpear-cli')
+  .name('gitpear')
   .description('CLI to gitpear')
   .version(pkg.version)
 
@@ -88,7 +88,9 @@ program
   .description('list all gitpear repos')
   .option('-s, --shared', 'list only shared repos')
   .action((p, options) => {
-    home.list(options.opts().shared).forEach(name => console.log(name))
+    const k = home.readPk()
+    const s = options.opts().shared
+    home.list(s).forEach(n => console.log(n, ...(s ? ['\t', `pear://${k}/${n}`] : [])))
   })
 
 program
