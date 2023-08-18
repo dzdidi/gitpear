@@ -7,7 +7,7 @@
     "types": "tsc src/*.js --declaration --allowJs --emitDeclarationOnly --outDir types --target es2015",
     "lint": "standard --fix",
     "preinstall": "./bin/preinstall.sh",
-    "set-test": "tar xzf test_home.tar.gz -C . "
+    "pretest": "tar xzf test_home.tar.gz -C . "
   },
   "bin": {
     "gitpeard": "./src/gitpeard.js",
