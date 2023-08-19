@@ -1,4 +1,9 @@
 const homedir = require('os').homedir()
+
+const bip39 = require('bip39')
+const bip32 = require('bip32')
+const ecc = require('tiny-secp256k1')
+
 const crypto = require('hypercore-crypto')
 const chokidar = require('chokidar')
 
@@ -38,28 +43,31 @@ function getCodePath (name) {
 }
 
 function readPk () {
-  try {
-    const seed = fs.readFileSync(`${APP_HOME}/.seed`)
-    const keyPair = crypto.keyPair(seed)
-    return keyPair.publicKey.toString('hex')
-  } catch (e) {
-    if (e.code !== 'ENOENT') throw e
+  const keyPair = getKeyPair()
+  return keyPair.publicKey.toString('hex')
+}
 
-    console.error('Seed will be generated after first start of daemon')
-  }
+function getKeychainFromMnemonic (mnemonic) {
+  const PRIMARY_KEY_DERIVATION_PATH = 'm/777' // FIXME
+  const seed = bip39.mnemonicToSeedSync(mnemonic)
+  const root = bip32.BIP32Factory(ecc).fromSeed(seed)
+  const primaryKey = root.derivePath(PRIMARY_KEY_DERIVATION_PATH).privateKey
+
+  return crypto.keyPair(primaryKey)
 }
 
 function getKeyPair () {
-  let seed
+  let mnemonic
   try {
-    seed = fs.readFileSync(`${APP_HOME}/.seed`)
+    mnemonic = fs.readFileSync(`${APP_HOME}/.mnemonic`, 'utf8')
   } catch (e) {
     if (e.code !== 'ENOENT') throw e
 
-    seed = crypto.randomBytes(32)
-    fs.writeFileSync(`${APP_HOME}/.seed`, seed)
+    mnemonic = bip39.generateMnemonic()
+    fs.writeFileSync(`${APP_HOME}/.mnemonic`, mnemonic)
   }
-  return crypto.keyPair(seed)
+
+  return getKeychainFromMnemonic(mnemonic)
 }
 
 function watch (cb) {
@@ -106,7 +114,6 @@ module.exports = {
   isShared,
   list,
   readPk,
-  getKeyPair,
   watch,
   getCodePath,
   APP_HOME,
@@ -114,5 +121,6 @@ module.exports = {
   getErrStream,
   storeDaemonPid,
   getDaemonPid,
-  removeDaemonPid
+  removeDaemonPid,
+  getKeyPair
 }
