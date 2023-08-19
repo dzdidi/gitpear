@@ -130,7 +130,11 @@ program
       }
 
       const pid = home.getDaemonPid()
-      process.kill(pid)
+      try {
+        process.kill(pid)
+      } catch (e) {
+        if (e.code !== 'ESRCH') throw e
+      }
 
       home.removeDaemonPid()
       console.log('Daemon stopped. Process ID:', pid)
