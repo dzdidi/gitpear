@@ -11,6 +11,10 @@ const fs = require('fs')
 
 const APP_HOME = process.env.GIT_PEAR || `${homedir}/.gitpear`
 
+function mnemonicExists () {
+  return fs.existsSync(`${APP_HOME}/.mnemonic`)
+}
+
 function createAppFolder (name) {
   fs.mkdirSync(`${APP_HOME}/${name}/code`, { recursive: true })
 }
@@ -122,5 +126,6 @@ module.exports = {
   storeDaemonPid,
   getDaemonPid,
   removeDaemonPid,
-  getKeyPair
+  getKeyPair,
+  mnemonicExists
 }

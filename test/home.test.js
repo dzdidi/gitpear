@@ -8,6 +8,14 @@ test('getAppHome', t => {
   t.ok(home.APP_HOME)
 })
 
+test('mnemonic exists', t => {
+  t.ok(home.mnemonicExists())
+  fs.renameSync(`${home.APP_HOME}/.mnemonic`, `${home.APP_HOME}/.mnemonic.bak`)
+
+  t.absent(home.mnemonicExists())
+  fs.renameSync(`${home.APP_HOME}/.mnemonic.bak`, `${home.APP_HOME}/.mnemonic`)
+})
+
 test('createAppFolder, share, is shared, unshare, isInitialized, list, getCodePath', t => {
   home.createAppFolder('test')
 

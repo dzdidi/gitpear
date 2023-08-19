@@ -107,16 +107,18 @@ program
   .option('-k, --stop', 'stop daemon')
   .action((p, options) => {
     if (options.opts().start) {
-      // TODO: check if it is a first run (.mnemonic exists)
-      // if not =>
-      //   ask for mnemonic or propose to generate it
-      //   if mnemonic is provided - check
-      //     - if valid mnemonic
-      //     - if not used mnemonic
-      //        to avoid killing hypercore due to multiple key instances
-      //        using ephemeral key try to access hypercore with key
-      //        generated from supplied valid mnemonic
-      //  if yes => use it
+      if (!home.mnemonicExists()) {
+        // TODO:
+        //   ask for mnemonic or propose to generate it
+        //   if mnemonic is provided - check
+        //     - if valid mnemonic
+        //     - if not used mnemonic
+        //        to avoid killing hypercore due to multiple key instances
+        //        using ephemeral key try to access hypercore with key
+        //        generated from supplied valid mnemonic
+
+      }
+
       if (home.getDaemonPid()) {
         console.error('Daemon already running with PID:', home.getDaemonPid())
         process.exit(1)
