@@ -10,9 +10,9 @@
     "pretest": "tar xzf test_home.tar.gz -C . "
   },
   "bin": {
-    "gitpeard": "./src/gitpeard.js",
+    "git-peard": "./src/gitpeard.js",
     "git-remote-pear": "./src/git-remote-pear.js",
-    "gitpear": "./src/cli.js"
+    "git-pear": "./src/cli.js"
   },
   "repository": {
     "type": "git",

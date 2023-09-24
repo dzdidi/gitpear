@@ -31,17 +31,17 @@ NOTE: application home directory will be created in `~/.gitpear` - this may requ
 
 All data will be persisted in application directory (default `~/.gitpear`). To change it. Provide environment variable `GIT_PEAR`
 
-* `gitpear daemon <-s, --start | -k, --stop>` - start or stop daemon
+* `git pear daemon <-s, --start | -k, --stop>` - start or stop daemon
 
-* `gitpear key` - print out public key. Share it with your peers so that they can do `git pull pear:<public key>/<repo name>`
+* `git pear key` - print out public key. Share it with your peers so that they can do `git pull pear:<public key>/<repo name>`
 
-* `gitpear init [-s, --share] <path>` - It will create [bare repository](https://git-scm.com/docs/git-init#Documentation/git-init.txt---bare) of the same name in application directory (default ~/.gitpear/<repository name>). It will add [git remote](https://git-scm.com/docs/git-remote) in current repository with name `pear`. So just like in traditional flow doing `git push orign`, here we do `git push pear`. By default repository will not be shared. To enable sharing provide `-s` or call `gitpear share <path>` later
+* `git pear init [-s, --share] <path>` - It will create [bare repository](https://git-scm.com/docs/git-init#Documentation/git-init.txt---bare) of the same name in application directory (default ~/.gitpear/<repository name>). It will add [git remote](https://git-scm.com/docs/git-remote) in current repository with name `pear`. So just like in traditional flow doing `git push orign`, here we do `git push pear`. By default repository will not be shared. To enable sharing provide `-s` or call `gitpear share <path>` later
 
-* `gitpear share <path>` - makes repository sharable
+* `git pear share <path>` - makes repository sharable
 
-* `gitpear unshare <path>` -  stop sharing repository
+* `git pear unshare <path>` -  stop sharing repository
 
-* `gitpear list [-s, --shared]` - list all or (only shared) repositories
+* `git pear list [-s, --shared]` - list all or (only shared) repositories
 
 ## Usage example
 
@@ -53,8 +53,8 @@ Collaboration is possible however with the following flow between Alice and Bob 
 2. Alice steps are:
 ```
 cd Repo
-gitpear init -s
-gitpear list
+git pear init -s
+git pear list
 # outputs:
 # Repo    pear://<Alice public key>/Repo
 ```
@@ -63,12 +63,12 @@ gitpear list
 ```
 git clone pear://<Alice public key>/Repo
 cd Repo
-gitpear init -s
+git pear init -s
 git checkout -b feature
 # implement feature
 git commit -m 'done'
 git push pear feature
-gitpear list 
+git pear list 
 # outputs:
 # Repo    pear://<Bob public key>/Repo
 ```
