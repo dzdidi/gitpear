@@ -18,7 +18,7 @@ const Corestore = require('corestore')
   swarm.join(crypto.discoveryKey(keyPair.publicKey))
   await swarm.flush()
 
-  console.log('Public key:', home.readPk())
+  console.log('\n\tPublic key:', home.readPk())
 
   let state = await setState(store)
   let { announcedRefs, repositories, drives } = state
@@ -51,6 +51,7 @@ const Corestore = require('corestore')
 })()
 
 function logRepos (repositories) {
+  console.log('\tRepositories (hash, ref, repo):')
   for (const repo in repositories) {
     for (const ref in repositories[repo]) console.log(repositories[repo][ref], '\t', ref, '\t', repo)
   }
