@@ -105,23 +105,37 @@ program
   .description('start/stop gitpear daemon')
   .option('-s, --start', 'start daemon')
   .option('-k, --stop', 'stop daemon')
+  .option('-a, --attach', 'watch daemon logs')
   .action((p, options) => {
+    if (options.opts().start && options.opts().stop) {
+      console.error('Cannot start and stop daemon at the same time')
+      process.exit(1)
+    }
+    if (!options.opts().start && !options.opts().stop) {
+      console.error('Need either start or stop option')
+      process.exit(1)
+    }
+
     if (options.opts().start) {
       if (home.getDaemonPid()) {
         console.error('Daemon already running with PID:', home.getDaemonPid())
         process.exit(1)
       }
 
-      const daemon = spawn('gitpeard', {
-        detached: true,
-        stdio: [
-          'ignore',
-          home.getOutStream(),
-          home.getErrStream()
-        ]
-      })
+      const opts = {}
+      if (options.opts().attach) {
+        opts.stdio = 'inherit'
+      } else {
+        opts.detached = true
+        opts.stdio = [ 'ignore', home.getOutStream(), home.getErrStream() ]
+      }
+
+      const daemon = spawn('gitpeard', opts)
       console.log('Daemon started. Process ID:', daemon.pid)
       home.storeDaemonPid(daemon.pid)
+      // TODO: remove in case of error or exit but allow unref
+      // daemon.on('error', home.removeDaemonPid)
+      // daemon.on('exit', home.removeDaemonPid)
       daemon.unref()
     } else if (options.opts().stop) {
       if (!home.getDaemonPid()) {
