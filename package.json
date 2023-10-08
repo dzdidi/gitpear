@@ -1,6 +1,6 @@
 {
   "name": "gitpear",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "p2p transport helpers, daemon and cli for git based on holepunch/hypercore stack",
   "scripts": {
     "test": "GIT_PEAR=./.test_home brittle ./test/**/*.test.js --coverage --bail",
