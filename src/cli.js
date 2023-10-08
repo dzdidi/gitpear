@@ -130,7 +130,7 @@ program
         opts.stdio = [ 'ignore', home.getOutStream(), home.getErrStream() ]
       }
 
-      const daemon = spawn('gitpeard', opts)
+      const daemon = spawn('git-peard', opts)
       console.log('Daemon started. Process ID:', daemon.pid)
       home.storeDaemonPid(daemon.pid)
       // TODO: remove in case of error or exit but allow unref
