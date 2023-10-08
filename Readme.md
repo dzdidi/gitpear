@@ -11,21 +11,31 @@ To enable clone or fetch or pull using `git <clone|fetch|pull> pear:<public key>
 
 ## Installation
 
-It is necessary for corresponding binaries to be in `$PATH`, thus gitpear needs to be installed globally
+It is necessary for corresponding binaries to be in `$PATH`, thus gitpear needs to be installed globally.
+NOTE: application home directory will be created in `~/.gitpear` - this may require `sudo`.
 
-### From remote
+### From npm
 ```sh
-npm install -g git@github.com:dzdidi/gitpear.git
+npm install -g gitpear
 ```
 
-### From local
+### From git
 ```sh
 git clone git@github.com:dzdidi/gitpear.git
 cd gitpear
+npm install
 npm link
 ```
 
-NOTE: application home directory will be created in `~/.gitpear` - this may require `sudo`
+### From git + Nix
+```sh
+git clone git@github.com:dzdidi/gitpear.git
+cd gitpear
+npm install
+npm nix
+```
+
+See `./result` - for binaries build by nix. To make the available add to path by running `PATH="${PATH:+${PATH}:}${PWD}/result/bin/"`
 
 ##
 
