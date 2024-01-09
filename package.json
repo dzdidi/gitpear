@@ -43,10 +43,10 @@
   "dependencies": {
     "chokidar": "^3.5.3",
     "commander": "^11.0.0",
-    "corestore": "^6.10.1",
-    "hyperdrive": "^11.5.3",
-    "hyperswarm": "^4.5.1",
-    "protomux-rpc": "^1.4.1",
+    "corestore": "^6.15.13",
+    "hyperdrive": "^11.6.3",
+    "hyperswarm": "^4.7.13",
+    "protomux-rpc": "^1.5.1",
     "random-access-memory": "^6.2.0"
   }
 }
