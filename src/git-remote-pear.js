@@ -77,7 +77,12 @@ async function talkToGit (refs, drive) {
       let [src, dst] = chunk.split(':')
       src = src.split(' ')[1]
       const isForce = src.startsWith('+')
-      if (isForce) src = src.slice(1)
+      if (isForce) {
+        src = src.slice(1)
+        console.warn('force push is disabled')
+        process.stdout.write('\n\n')
+        process.exit(0)
+      }
 
       // TODO: write to something
       console.warn('src:', src, 'dst:', dst)
