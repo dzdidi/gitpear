@@ -70,8 +70,20 @@ async function talkToGit (refs, drive) {
   process.stdin.on('readable', async function () {
     const chunk = process.stdin.read()
     if (chunk === 'capabilities\n') {
+      process.stdout.write('list\n') // TODO: support push
+      process.stdout.write('push\n') // TODO: support push
       process.stdout.write('fetch\n\n')
-    } else if (chunk === 'list\n') {
+    } else if (chunk && chunk.search(/^push/) !== -1) {
+      let [src, dst] = chunk.split(':')
+      src = src.split(' ')[1]
+      const isForce = src.startsWith('+')
+      if (isForce) src = src.slice(1)
+
+      // TODO: write to something
+      console.warn('src:', src, 'dst:', dst)
+      process.stdout.write('\n\n')
+      process.exit(0)
+    } else if (chunk && chunk.search(/^list/) !== -1) { // list && list for-push
       Object.keys(refs).forEach(function (branch, i) {
         process.stdout.write(refs[branch] + ' ' + branch + '\n')
       })
