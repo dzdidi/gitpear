@@ -70,22 +70,16 @@ async function talkToGit (refs, drive) {
   process.stdin.on('readable', async function () {
     const chunk = process.stdin.read()
     if (chunk === 'capabilities\n') {
-      process.stdout.write('list\n') // TODO: support push
-      process.stdout.write('push\n') // TODO: support push
+      process.stdout.write('list\n')
+      process.stdout.write('push\n')
       process.stdout.write('fetch\n\n')
     } else if (chunk && chunk.search(/^push/) !== -1) {
-      let [src, dst] = chunk.split(':')
-      src = src.split(' ')[1]
-      const isForce = src.startsWith('+')
-      if (isForce) {
-        src = src.slice(1)
-        console.warn('force push is disabled')
-        process.stdout.write('\n\n')
-        process.exit(0)
-      }
+      const [_command, path] = chunk.split(' ')
+      const [src, dst] = path.split(':')
 
-      // TODO: write to something
-      console.warn('src:', src, 'dst:', dst)
+      const isDelete = !src
+      const isForce = src.startsWith('+')
+
       process.stdout.write('\n\n')
       process.exit(0)
     } else if (chunk && chunk.search(/^list/) !== -1) { // list && list for-push
