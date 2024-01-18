@@ -73,12 +73,26 @@ async function talkToGit (refs, drive) {
       process.stdout.write('list\n')
       process.stdout.write('push\n')
       process.stdout.write('fetch\n\n')
-    } else if (chunk && chunk.search(/^push/) !== -1) {
+    } else if (chunk && chunk.search(/^push/) !== -1) {j
       const [_command, path] = chunk.split(' ')
       const [src, dst] = path.split(':')
 
       const isDelete = !src
       const isForce = src.startsWith('+')
+
+      // TODO: options:
+      // ---- push by pull ----
+      // - init for share (daemon, etc)
+      // - push branch to local remote
+      // - send rpc command to origin
+      // Mapping of RPC commands to git commands on origin:
+      // - normal push   - git pull
+      // - force push    - git reset --hard <remote>/<branch>
+      // - delete branch - git branch -D <remote>/<branch>
+      //
+      // ---- push by push ----
+      //
+      //
 
       process.stdout.write('\n\n')
       process.exit(0)
