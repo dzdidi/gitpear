@@ -9,6 +9,7 @@ const Hyperdrive = require('hyperdrive')
 const crypto = require('hypercore-crypto')
 
 const git = require('./git.js')
+const home = require('./home')
 
 const url = process.argv[3]
 const matches = url.match(/pear:\/\/([a-f0-9]{64})\/(.*)/)
@@ -80,6 +81,14 @@ async function talkToGit (refs, drive) {
       const isDelete = !src
       const isForce = src.startsWith('+')
 
+      if (!home.getDaemonPid()) {
+        const daemon = spawn('git-peard', opts)
+        home.storeDaemonPid(daemon.pid)
+        // TODO: remove in case of error or exit but allow unref
+        // daemon.on('error', home.removeDaemonPid)
+        // daemon.on('exit', home.removeDaemonPid)
+        daemon.unref()
+      }
       // TODO: options:
       // ---- push by pull ----
       // - init for share (daemon, etc)
