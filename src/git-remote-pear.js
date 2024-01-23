@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const { spawn } = require('child_process')
 const ProtomuxRPC = require('protomux-rpc')
 
 const RAM = require('random-access-memory')
@@ -25,7 +26,23 @@ const targetKey = matches[1]
 const repoName = matches[2]
 
 const store = new Corestore(RAM)
-const swarm = new Hyperswarm()
+const swarm = new Hyperswarm({ keypair: home.getKeyPair() })
+
+let daemonPid
+if (!home.isDaemonRunning()) {
+  const opts = {
+   detached: true,
+   stdio: [ 'ignore', home.getOutStream(), home.getErrStream() ]
+  }
+  const daemon = spawn('git-peard', opts)
+  daemonPid = daemon.pid
+  home.storeDaemonPid(daemonPid)
+  // TODO: remove in case of error or exit but allow unref
+  // daemon.on('error', home.removeDaemonPid)
+  // daemon.on('exit', home.removeDaemonPid)
+  console.error('started daemon', daemonPid)
+  daemon.unref()
+}
 
 swarm.join(crypto.discoveryKey(Buffer.from(targetKey, 'hex')), { server: false })
 
@@ -61,10 +78,10 @@ swarm.on('connection', async (socket) => {
 
   const refsRes = await rpc.request('get-refs', Buffer.from(repoName))
 
-  await talkToGit(JSON.parse(refsRes.toString()), drive, repoName)
+  await talkToGit(JSON.parse(refsRes.toString()), drive, repoName, rpc)
 })
 
-async function talkToGit (refs, drive, repoName) {
+async function talkToGit (refs, drive, repoName, rpc) {
   for (const ref in refs) {
     console.warn(refs[ref] + '\t' + ref)
   }
@@ -83,37 +100,28 @@ async function talkToGit (refs, drive, repoName) {
       const isDelete = !src
       const isForce = src.startsWith('+')
 
-      // XXX: it looks like git is trying to establish network connection first, so if it can not
-      // reach push destination it hangs everything on capabilities exchange
-      // TODO: add timeout
+      if (!home.isShared(repoName)) {
+        home.shareAppFolder(name)
+      }
+      await git.push(src.replace('refs/heads/', ''))
 
-      // FOR TESTING RUN SECOND INSTANCE OF GIT-PEARD
-      // if (!home.isDaemonRunning()) {
-      //   const opts = {
-      //    detached: true,
-      //    stdio: [ 'ignore', home.getOutStream(), home.getErrStream() ]
-      //   }
-      //   const daemon = spawn('git-peard', opts)
-      //   home.storeDaemonPid(daemon.pid)
-      //   // TODO: remove in case of error or exit but allow unref
-      //   // daemon.on('error', home.removeDaemonPid)
-      //   // daemon.on('exit', home.removeDaemonPid)
-      //   daemon.unref()
-      // }
+      console.error('_command', _command)
+      let command
+      if (isDelete) {
+        command = 'delete-branch-from-repo'
+      } else if (isForce) {
+        command = 'force-push-to-repo'
+      } else {
+        command = 'push-to-repo'
+      }
 
-      console.error('TODO')
-      // TODO: get repo name (current dir name instead or name from url)
-      // if (home.isShared(repoName)) {
-      //   git push branch
-      // } else {
-      //   share repo with current branch
-      // }
+      const publicKey = home.readPk()
+      const res = await rpc.request(command, Buffer.from(repoName + ':' + dst + ':' + publicKey))
 
-      // - send rpc command to remote (url)
-      // Mapping of RPC commands to git commands on origin:
-      // - normal push   - git pull
-      // - force push    - git reset --hard <remote>/<branch>
-      // - delete branch - git branch -D <remote>/<branch>
+      console.error('killing', daemonPid)
+      process.kill(daemonPid || home.getDaemonPid())
+      console.error('killed')
+      home.removeDaemonPid()
 
       process.stdout.write('\n\n')
       process.exit(0)

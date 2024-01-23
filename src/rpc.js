@@ -21,10 +21,9 @@ module.exports = class RPC {
     rpc.respond('get-refs', async req => await this.getRefsHandler(req))
 
     /* -- PUSH HANDLERS -- */
-    // TODO: reponders to pull requests
-    // normal push: git pull <url>
-    // force push: git reset --hard url/<branch> 
-    // delete branch: git branch -D url/<branch>
+    rpc.respond('push-to-repo', async req => this.pushHandler(req))
+    rpc.respond('force-push-to-repo', req => this.forcePushHandler(req))
+    rpc.respond('delete-branch-from-repo', req => this.deleteBranchHandler(req))
 
     this.connections[peerInfo.publicKey] = rpc
   }
@@ -41,5 +40,20 @@ module.exports = class RPC {
     const res = this.repositories[req.toString()]
 
     return Buffer.from(JSON.stringify(res))
+  }
+
+  pushHandler (req) {
+    console.error('req', req.toString())
+    console.error('pushHandler not implemented')
+  }
+
+  forcePushHandler (req) {
+    console.error('req', req.toString())
+    console.error('forcePushHandler not implemented')
+  }
+
+  deleteBranchHandler (req) {
+    console.error('req', req.toString())
+    console.error('deleteBranchHandler not implemented')
   }
 }
