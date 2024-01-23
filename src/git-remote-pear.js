@@ -121,11 +121,10 @@ async function talkToGit (refs, drive, repoName, rpc) {
       const publicKey = home.readPk()
       const res = await rpc.request(command, Buffer.from(`${publicKey}/${repoName}:${dst}`))
 
-      console.error('killing', daemonPid)
       process.kill(daemonPid || home.getDaemonPid())
-      console.error('killed')
       home.removeDaemonPid()
 
+      process.stdout.write(res.toString())
       process.stdout.write('\n\n')
       process.exit(0)
     } else if (chunk && chunk.search(/^list/) !== -1) { // list && list for-push

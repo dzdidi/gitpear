@@ -44,24 +44,26 @@ module.exports = class RPC {
 
   pushHandler (req) {
     // TODO: check ACL
-    // XXX: from the inside of a bare repo:
-    // git fetch url <branch>:<branch>
+    // collect stdout to buffer and return it
+    // const process = spawn('git', ['fetch', url, `${branch}:${branch}`], { env: { GIT_DIR: getCodePath(name) } })
     console.error('req', req.toString())
     console.error('pushHandler not implemented')
   }
 
   forcePushHandler (req) {
-    // TODO: check ACL
-    // XXX: from the inside of a bare repo:
-    // git reset --hard url <branch>
+    // TODO:
+    // check ACL
+    // collect stdout to buffer and return it
+    // const process = spawn('git', ['reset', '--hard', url, branch], { env: { GIT_DIR: getCodePath(name) } })
     console.error('req', req.toString())
     console.error('forcePushHandler not implemented')
   }
 
   deleteBranchHandler (req) {
-    // TODO: check ACL
-    // XXX: from the inside of a bare repo:
-    // git push -d pear <branch>
+    // TODO:
+    // check ACL
+    // collect stdout to buffer and return it
+    // const process = spawn('git', ['branch', '-d', branch], { env: { GIT_DIR: getCodePath(name) } })
     console.error('req', req.toString())
     console.error('deleteBranchHandler not implemented')
   }
