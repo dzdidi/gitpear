@@ -90,6 +90,10 @@ function getDaemonPid () {
   }
 }
 
+function isDaemonRunning () {
+  return fs.existsSync(`${APP_HOME}/.daemon.pid`)
+}
+
 function removeDaemonPid () {
   try {
     fs.unlinkSync(`${APP_HOME}/.daemon.pid`)
@@ -114,5 +118,6 @@ module.exports = {
   getErrStream,
   storeDaemonPid,
   getDaemonPid,
+  isDaemonRunning,
   removeDaemonPid
 }

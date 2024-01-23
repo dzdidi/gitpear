@@ -11,6 +11,8 @@ const crypto = require('hypercore-crypto')
 const git = require('./git.js')
 const home = require('./home')
 
+const fs = require('fs')
+
 const url = process.argv[3]
 const matches = url.match(/pear:\/\/([a-f0-9]{64})\/(.*)/)
 
@@ -59,10 +61,10 @@ swarm.on('connection', async (socket) => {
 
   const refsRes = await rpc.request('get-refs', Buffer.from(repoName))
 
-  await talkToGit(JSON.parse(refsRes.toString()), drive)
+  await talkToGit(JSON.parse(refsRes.toString()), drive, repoName)
 })
 
-async function talkToGit (refs, drive) {
+async function talkToGit (refs, drive, repoName) {
   for (const ref in refs) {
     console.warn(refs[ref] + '\t' + ref)
   }
@@ -74,34 +76,44 @@ async function talkToGit (refs, drive) {
       process.stdout.write('list\n')
       process.stdout.write('push\n')
       process.stdout.write('fetch\n\n')
-    } else if (chunk && chunk.search(/^push/) !== -1) {j
+    } else if (chunk && chunk.search(/^push/) !== -1) {
       const [_command, path] = chunk.split(' ')
       const [src, dst] = path.split(':')
 
       const isDelete = !src
       const isForce = src.startsWith('+')
 
-      if (!home.getDaemonPid()) {
-        const daemon = spawn('git-peard', opts)
-        home.storeDaemonPid(daemon.pid)
-        // TODO: remove in case of error or exit but allow unref
-        // daemon.on('error', home.removeDaemonPid)
-        // daemon.on('exit', home.removeDaemonPid)
-        daemon.unref()
-      }
-      // TODO: options:
-      // ---- push by pull ----
-      // - init for share (daemon, etc)
-      // - push branch to local remote
-      // - send rpc command to origin
+      // XXX: it looks like git is trying to establish network connection first, so if it can not
+      // reach push destination it hangs everything on capabilities exchange
+      // TODO: add timeout
+
+      // FOR TESTING RUN SECOND INSTANCE OF GIT-PEARD
+      // if (!home.isDaemonRunning()) {
+      //   const opts = {
+      //    detached: true,
+      //    stdio: [ 'ignore', home.getOutStream(), home.getErrStream() ]
+      //   }
+      //   const daemon = spawn('git-peard', opts)
+      //   home.storeDaemonPid(daemon.pid)
+      //   // TODO: remove in case of error or exit but allow unref
+      //   // daemon.on('error', home.removeDaemonPid)
+      //   // daemon.on('exit', home.removeDaemonPid)
+      //   daemon.unref()
+      // }
+
+      console.error('TODO')
+      // TODO: get repo name (current dir name instead or name from url)
+      // if (home.isShared(repoName)) {
+      //   git push branch
+      // } else {
+      //   share repo with current branch
+      // }
+
+      // - send rpc command to remote (url)
       // Mapping of RPC commands to git commands on origin:
       // - normal push   - git pull
       // - force push    - git reset --hard <remote>/<branch>
       // - delete branch - git branch -D <remote>/<branch>
-      //
-      // ---- push by push ----
-      //
-      //
 
       process.stdout.write('\n\n')
       process.exit(0)

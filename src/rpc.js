@@ -16,8 +16,15 @@ module.exports = class RPC {
     // for example check of peerInfo.publicKey is in a list of allowed keys
     // which can in turn be stored in a .git-daemon-export-ok file
 
+    /* -- PULL HANDLERS -- */
     rpc.respond('get-repos', req => this.getReposHandler(req))
     rpc.respond('get-refs', async req => await this.getRefsHandler(req))
+
+    /* -- PUSH HANDLERS -- */
+    // TODO: reponders to pull requests
+    // normal push: git pull <url>
+    // force push: git reset --hard url/<branch> 
+    // delete branch: git branch -D url/<branch>
 
     this.connections[peerInfo.publicKey] = rpc
   }
