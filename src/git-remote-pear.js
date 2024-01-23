@@ -95,7 +95,7 @@ async function talkToGit (refs, drive, repoName, rpc) {
       process.stdout.write('fetch\n\n')
     } else if (chunk && chunk.search(/^push/) !== -1) {
       const [_command, path] = chunk.split(' ')
-      const [src, dst] = path.split(':')
+      let [src, dst] = path.split(':')
 
       const isDelete = !src
       const isForce = src.startsWith('+')
@@ -103,9 +103,12 @@ async function talkToGit (refs, drive, repoName, rpc) {
       if (!home.isShared(repoName)) {
         home.shareAppFolder(name)
       }
-      await git.push(src.replace('refs/heads/', ''))
+      
+      console.error('dst', JSON.stringify(dst))
+      dst = dst.replace('refs/heads/', '').replace('\n\n', '')
+      console.error('dst', JSON.stringify(dst))
+      await git.push(dst)
 
-      console.error('_command', _command)
       let command
       if (isDelete) {
         command = 'delete-branch-from-repo'
@@ -116,7 +119,7 @@ async function talkToGit (refs, drive, repoName, rpc) {
       }
 
       const publicKey = home.readPk()
-      const res = await rpc.request(command, Buffer.from(repoName + ':' + dst + ':' + publicKey))
+      const res = await rpc.request(command, Buffer.from(`${publicKey}/${repoName}:${dst}`))
 
       console.error('killing', daemonPid)
       process.kill(daemonPid || home.getDaemonPid())
