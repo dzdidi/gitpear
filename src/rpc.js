@@ -43,17 +43,42 @@ module.exports = class RPC {
   }
 
   pushHandler (req) {
+    // TODO: check ACL
+    // XXX: from the inside of a bare repo:
+    // git fetch url <branch>:<branch>
     console.error('req', req.toString())
     console.error('pushHandler not implemented')
   }
 
   forcePushHandler (req) {
+    // TODO: check ACL
+    // XXX: from the inside of a bare repo:
+    // git reset --hard url <branch>
     console.error('req', req.toString())
     console.error('forcePushHandler not implemented')
   }
 
   deleteBranchHandler (req) {
+    // TODO: check ACL
+    // XXX: from the inside of a bare repo:
+    // git push -d pear <branch>
     console.error('req', req.toString())
     console.error('deleteBranchHandler not implemented')
+  }
+
+  parsePushCommand(req) {
+    const [url, branch] = req.toString().split(':')
+    const [key, repo] = url.split('/')
+    return {
+      url: `pear://${url}`,
+      repo,
+      key,
+      branch
+    }
+  }
+
+  loadACL(repoName) {
+    // TODO: read contact of .git-daemon-export-ok
+    // find key and its permissions
   }
 }
