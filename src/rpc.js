@@ -43,6 +43,12 @@ module.exports = class RPC {
   }
 
   pushHandler (req) {
+    console.error('pushHandler is to be implemented')
+    const { url, repo, key, branch } = this.parsePushCommand(req)
+    console.error('url', url)
+    console.error('repo', repo)
+    console.error('key', key)
+    console.error('branch', branch)
     // TODO: check ACL
     // collect stdout to buffer and return it
     // const process = spawn('git', ['fetch', url, `${branch}:${branch}`], { env: { GIT_DIR: getCodePath(name) } })
@@ -51,6 +57,7 @@ module.exports = class RPC {
   }
 
   forcePushHandler (req) {
+    const { url, repo, key, branch } = this.parsePushCommand(req)
     // TODO:
     // check ACL
     // collect stdout to buffer and return it
@@ -60,6 +67,7 @@ module.exports = class RPC {
   }
 
   deleteBranchHandler (req) {
+    const { url, repo, key, branch } = this.parsePushCommand(req)
     // TODO:
     // check ACL
     // collect stdout to buffer and return it
