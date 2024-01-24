@@ -23,7 +23,7 @@ module.exports = class RPC {
     rpc.respond('get-refs', async req => await this.getRefsHandler(req))
 
     /* -- PUSH HANDLERS -- */
-    rpc.respond('push-to-repo', async req => this.pushHandler(req))
+    rpc.respond('push-to-repo', async req => await this.pushHandler(req))
     rpc.respond('force-push-to-repo', req => this.forcePushHandler(req))
     rpc.respond('delete-branch-from-repo', req => this.deleteBranchHandler(req))
 
@@ -44,24 +44,26 @@ module.exports = class RPC {
     return Buffer.from(JSON.stringify(res))
   }
 
-  pushHandler (req) {
+  async pushHandler (req) {
     const { url, repo, key, branch } = this.parsePushCommand(req)
     // TODO: check ACL
     // collect stdout to buffer and return it
-    const process = spawn('git', ['fetch', url, `${branch}:${branch}`], { env: { GIT_DIR: home.getCodePath(repo) } })
-    let outBuffer = Buffer.from('')
-    let errBuffer = Buffer.from('')
-    process.stdout.on('data', data => {
-      console.error('data:', JSON.stringify(data.toString()))
-      outBuffer = Buffer.concat([outBuffer, data])
-    })
-    process.stderr.on('data', data => {
-      console.error('error:', JSON.stringify(data.toString()))
-      errBuffer = Buffer.concat([errBuffer, data])
-    })
+    return await new Promise((resolve, reject) => {
+      const process = spawn('git', ['fetch', url, `${branch}:${branch}`], { env: { GIT_DIR: home.getCodePath(repo) } })
+      //let outBuffer = Buffer.from('')
+      // process.stdout.on('data', data => {
+      //   console.error('data:', JSON.stringify(data.toString()))
+      //   outBuffer = Buffer.concat([outBuffer, data])
+      // })
+      let errBuffer = Buffer.from('')
+      process.stderr.on('data', data => {
+        errBuffer = Buffer.concat([errBuffer, data])
+      })
 
-    process.on('close', code => {
-      console.error(`child process exited with code ${code}`)
+      process.on('close', code => {
+        console.error(`child process exited with code ${code}`)
+        return code === 0 ? resolve(errBuffer) : reject(errBuffer)
+      })
     })
   }
 
