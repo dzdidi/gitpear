@@ -49,7 +49,7 @@ module.exports = class RPC {
     // TODO: check ACL
     // collect stdout to buffer and return it
     return await new Promise((resolve, reject) => {
-      const process = spawn('git', ['fetch', url, `${branch}:${branch}`], { env: { GIT_DIR: home.getCodePath(repo) } })
+      const process = spawn('git', ['pull', url, `${branch}:${branch}`], { env: { GIT_DIR: home.getCodePath(repo) } })
       //let outBuffer = Buffer.from('')
       // process.stdout.on('data', data => {
       //   console.error('data:', JSON.stringify(data.toString()))
