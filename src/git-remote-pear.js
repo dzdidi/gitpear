@@ -104,9 +104,7 @@ async function talkToGit (refs, drive, repoName, rpc) {
         home.shareAppFolder(name)
       }
       
-      console.error('dst', JSON.stringify(dst))
       dst = dst.replace('refs/heads/', '').replace('\n\n', '')
-      console.error('dst', JSON.stringify(dst))
       await git.push(dst)
 
       let command
@@ -125,7 +123,7 @@ async function talkToGit (refs, drive, repoName, rpc) {
       // home.removeDaemonPid()
 
       console.error('res', res.toString())
-      process.stdout.write(res.toString())
+      // process.stdout.write(res.toString())
       process.stdout.write('\n\n')
       process.exit(0)
     } else if (chunk && chunk.search(/^list/) !== -1) { // list && list for-push
