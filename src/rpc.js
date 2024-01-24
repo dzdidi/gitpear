@@ -57,6 +57,10 @@ module.exports = class RPC {
       errBuffer.push(data)
       console.error('error:', JSON.stringify(data.toString()))
     })
+
+    process.on('close', code => {
+      console.error(`child process exited with code ${code}`)
+    })
   }
 
   forcePushHandler (req) {
