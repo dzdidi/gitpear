@@ -59,11 +59,11 @@ module.exports = class RPC {
       let errBuffer = Buffer.from('')
       process.stderr.on('data', data => {
         errBuffer = Buffer.concat([errBuffer, data])
-        console.error('out:', errBuffer.toString())
+        console.error('out in str:', errBuffer.toString())
       })
 
       process.on('close', code => {
-        console.error('out:', errBuffer.toString())
+        console.error('out on close:', errBuffer.toString())
         console.error(`child process exited with code ${code}`)
         return code === 0 ? resolve(errBuffer) : reject(errBuffer)
       })
