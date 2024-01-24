@@ -43,16 +43,20 @@ module.exports = class RPC {
   }
 
   pushHandler (req) {
-    console.error('pushHandler is to be implemented', req.toString())
     const { url, repo, key, branch } = this.parsePushCommand(req)
-    console.error('url', url)
-    console.error('repo', repo)
-    console.error('key', key)
-    console.error('branch', branch)
     // TODO: check ACL
     // collect stdout to buffer and return it
-    // const process = spawn('git', ['fetch', url, `${branch}:${branch}`], { env: { GIT_DIR: getCodePath(name) } })
-    console.error('pushHandler not implemented')
+    const process = spawn('git', ['fetch', url, `${branch}:${branch}`], { env: { GIT_DIR: getCodePath(name) } })
+    const outBuffer = new Buffer()
+    const errBuffer = new Buffer()
+    process.stdout.on('data', data => {
+      outBuffer.push(data)
+      console.error('data', JSON.stringify(data.toString()))
+    })
+    process.stderr.on('data', data => {
+      errBuffer.push(data)
+      console.error('error', JSON.stringify(data.toString()))
+    })
   }
 
   forcePushHandler (req) {
