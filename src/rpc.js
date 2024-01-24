@@ -58,6 +58,7 @@ module.exports = class RPC {
       let errBuffer = Buffer.from('')
       process.stderr.on('data', data => {
         errBuffer = Buffer.concat([errBuffer, data])
+        console.error('out:', errBuffer.toString())
       })
 
       process.on('close', code => {
