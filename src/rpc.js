@@ -61,6 +61,7 @@ module.exports = class RPC {
       })
 
       process.on('close', code => {
+        console.error('out:', errBuffer.toString())
         console.error(`child process exited with code ${code}`)
         return code === 0 ? resolve(errBuffer) : reject(errBuffer)
       })
