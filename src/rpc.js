@@ -55,7 +55,7 @@ module.exports = class RPC {
       //   console.error('data:', JSON.stringify(data.toString()))
       //   outBuffer = Buffer.concat([outBuffer, data])
       // })
-      console.error('ARGS:'. process.argv)
+      console.error('ARGS:', process.argv)
       let errBuffer = Buffer.from('')
       process.stderr.on('data', data => {
         errBuffer = Buffer.concat([errBuffer, data])
