@@ -122,7 +122,6 @@ async function talkToGit (refs, drive, repoName, rpc) {
       // process.kill(daemonPid || home.getDaemonPid())
       // home.removeDaemonPid()
 
-      console.error('response', res.toString())
       // process.stdout.write(res.toString())
       process.stdout.write('\n\n')
       process.exit(0)

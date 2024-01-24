@@ -50,21 +50,13 @@ module.exports = class RPC {
     // collect stdout to buffer and return it
     return await new Promise((resolve, reject) => {
       const process = spawn('git', ['fetch', url, `${branch}:${branch}`], { env: { GIT_DIR: home.getCodePath(repo) } })
-      //let outBuffer = Buffer.from('')
-      // process.stdout.on('data', data => {
-      //   console.error('data:', JSON.stringify(data.toString()))
-      //   outBuffer = Buffer.concat([outBuffer, data])
-      // })
-      console.error('ARGS:', 'git', ['fetch', url, `${branch}:${branch}`], { env: { GIT_DIR: home.getCodePath(repo) } })
       let errBuffer = Buffer.from('')
       process.stderr.on('data', data => {
         errBuffer = Buffer.concat([errBuffer, data])
-        console.error('out in str:', errBuffer.toString())
       })
 
+      // TODO: write buffer to standard output with ACL
       process.on('close', code => {
-        console.error('out on close:', errBuffer.toString())
-        console.error(`child process exited with code ${code}`)
         return code === 0 ? resolve(errBuffer) : reject(errBuffer)
       })
     })
