@@ -51,11 +51,11 @@ module.exports = class RPC {
     const errBuffer = new Buffer()
     process.stdout.on('data', data => {
       outBuffer.push(data)
-      console.error('data', JSON.stringify(data.toString()))
+      console.error('data:', JSON.stringify(data.toString()))
     })
     process.stderr.on('data', data => {
       errBuffer.push(data)
-      console.error('error', JSON.stringify(data.toString()))
+      console.error('error:', JSON.stringify(data.toString()))
     })
   }
 
