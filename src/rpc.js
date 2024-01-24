@@ -52,11 +52,11 @@ module.exports = class RPC {
     const outBuffer = Buffer.from('')
     const errBuffer = Buffer.from('')
     process.stdout.on('data', data => {
-      console.error('data:', JSON.stringify(data.toString()))
+      console.error('git data:', JSON.stringify(data.toString()))
       outBuffer.push(data)
     })
     process.stderr.on('data', data => {
-      console.error('error:', JSON.stringify(data.toString()))
+      console.error('git error:', JSON.stringify(data.toString()))
       errBuffer.push(data)
     })
 
