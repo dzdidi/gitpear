@@ -1,4 +1,5 @@
 const ProtomuxRPC = require('protomux-rpc')
+const { spawn } = require('child_process')
 
 module.exports = class RPC {
   constructor (announcedRefs, repositories, drives) {
