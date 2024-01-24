@@ -1,5 +1,6 @@
 const ProtomuxRPC = require('protomux-rpc')
 const { spawn } = require('child_process')
+const home = require('./home')
 
 module.exports = class RPC {
   constructor (announcedRefs, repositories, drives) {
@@ -47,7 +48,7 @@ module.exports = class RPC {
     const { url, repo, key, branch } = this.parsePushCommand(req)
     // TODO: check ACL
     // collect stdout to buffer and return it
-    const process = spawn('git', ['fetch', url, `${branch}:${branch}`], { env: { GIT_DIR: getCodePath(name) } })
+    const process = spawn('git', ['fetch', url, `${branch}:${branch}`], { env: { GIT_DIR: home.getCodePath(name) } })
     const outBuffer = new Buffer()
     const errBuffer = new Buffer()
     process.stdout.on('data', data => {
@@ -69,7 +70,7 @@ module.exports = class RPC {
     // TODO:
     // check ACL
     // collect stdout to buffer and return it
-    // const process = spawn('git', ['reset', '--hard', url, branch], { env: { GIT_DIR: getCodePath(name) } })
+    // const process = spawn('git', ['reset', '--hard', url, branch], { env: { GIT_DIR: home.getCodePath(name) } })
     console.error('req', req.toString())
     console.error('forcePushHandler not implemented')
   }
@@ -79,7 +80,7 @@ module.exports = class RPC {
     // TODO:
     // check ACL
     // collect stdout to buffer and return it
-    // const process = spawn('git', ['branch', '-d', branch], { env: { GIT_DIR: getCodePath(name) } })
+    // const process = spawn('git', ['branch', '-d', branch], { env: { GIT_DIR: home.getCodePath(name) } })
     console.error('req', req.toString())
     console.error('deleteBranchHandler not implemented')
   }
