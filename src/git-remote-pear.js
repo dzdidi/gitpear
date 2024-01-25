@@ -82,9 +82,6 @@ swarm.on('connection', async (socket) => {
 })
 
 async function talkToGit (refs, drive, repoName, rpc) {
-  for (const ref in refs) {
-    console.warn(refs[ref] + '\t' + ref)
-  }
   process.stdin.setEncoding('utf8')
   const didFetch = false
   process.stdin.on('readable', async function () {
@@ -103,17 +100,20 @@ async function talkToGit (refs, drive, repoName, rpc) {
       if (!home.isShared(repoName)) {
         home.shareAppFolder(name)
       }
-      
+
       dst = dst.replace('refs/heads/', '').replace('\n\n', '')
-      await git.push(dst)
 
       let command
       if (isDelete) {
-        command = 'delete-branch-from-repo'
+        command = 'd-branch'
       } else if (isForce) {
-        command = 'force-push-to-repo'
+        await git.push(src, isForce)
+        src = src.replace('+', '')
+        command = 'f-push'
       } else {
-        command = 'push-to-repo'
+        console.warn('pushing', src, dst)
+        await git.push(src)
+        command = 'push'
       }
 
       const publicKey = home.readPk()
@@ -122,15 +122,20 @@ async function talkToGit (refs, drive, repoName, rpc) {
       // process.kill(daemonPid || home.getDaemonPid())
       // home.removeDaemonPid()
 
-      // process.stdout.write(res.toString())
       process.stdout.write('\n\n')
       process.exit(0)
     } else if (chunk && chunk.search(/^list/) !== -1) { // list && list for-push
+      for (const ref in refs) {
+        console.warn(refs[ref] + '\t' + ref)
+      }
       Object.keys(refs).forEach(function (branch, i) {
         process.stdout.write(refs[branch] + ' ' + branch + '\n')
       })
       process.stdout.write('\n')
     } else if (chunk && chunk.search(/^fetch/) !== -1) {
+      for (const ref in refs) {
+        console.warn(refs[ref] + '\t' + ref)
+      }
       const lines = chunk.split(/\n/).filter(l => l !== '')
 
       const targets = []

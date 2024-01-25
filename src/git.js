@@ -31,8 +31,10 @@ async function addRemote (name) {
   return await doGit(init)
 }
 
-async function push (branch = 'master') {
-  const push = spawn('git', ['push', 'pear', branch])
+async function push (branch = 'master', force = false) {
+  const args = ['push', 'pear', branch]
+  if (force) args.push('-f')
+  const push = spawn('git', args)
   return await doGit(push)
 }
 

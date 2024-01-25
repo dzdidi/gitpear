@@ -13,8 +13,7 @@
   "bin": {
     "git-peard": "./src/gitpeard.js",
     "git-remote-pear": "./src/git-remote-pear.js",
-    "git-pear": "./src/cli.js",
-    "rpc": "./src/rpc.js"
+    "git-pear": "./src/cli.js"
   },
   "repository": {
     "type": "git",

@@ -23,9 +23,9 @@ module.exports = class RPC {
     rpc.respond('get-refs', async req => await this.getRefsHandler(req))
 
     /* -- PUSH HANDLERS -- */
-    rpc.respond('push-to-repo', async req => await this.pushHandler(req))
-    rpc.respond('force-push-to-repo', req => this.forcePushHandler(req))
-    rpc.respond('delete-branch-from-repo', req => this.deleteBranchHandler(req))
+    rpc.respond('push', async req => await this.pushHandler(req))
+    rpc.respond('f-push', async req => await this.forcePushHandler(req))
+    rpc.respond('d-branch', async req => await this.deleteBranchHandler(req))
 
     this.connections[peerInfo.publicKey] = rpc
   }
@@ -47,7 +47,6 @@ module.exports = class RPC {
   async pushHandler (req) {
     const { url, repo, key, branch } = this.parsePushCommand(req)
     // TODO: check ACL
-    // collect stdout to buffer and return it
     return await new Promise((resolve, reject) => {
       const process = spawn('git', ['fetch', url, `${branch}:${branch}`], { env: { GIT_DIR: home.getCodePath(repo) } })
       let errBuffer = Buffer.from('')
@@ -55,31 +54,42 @@ module.exports = class RPC {
         errBuffer = Buffer.concat([errBuffer, data])
       })
 
-      // TODO: write buffer to standard output with ACL
       process.on('close', code => {
         return code === 0 ? resolve(errBuffer) : reject(errBuffer)
       })
     })
   }
 
-  forcePushHandler (req) {
+  async forcePushHandler (req) {
     const { url, repo, key, branch } = this.parsePushCommand(req)
-    // TODO:
-    // check ACL
-    // collect stdout to buffer and return it
-    // const process = spawn('git', ['reset', '--hard', url, branch], { env: { GIT_DIR: home.getCodePath(repo) } })
-    console.error('req', req.toString())
-    console.error('forcePushHandler not implemented')
+    // TODO: check ACL
+    return await new Promise((resolve, reject) => {
+      const process = spawn('git', ['fetch', url, `${branch}:${branch}`, '--force'], { env: { GIT_DIR: home.getCodePath(repo) } })
+      let errBuffer = Buffer.from('')
+      process.stderr.on('data', data => {
+        errBuffer = Buffer.concat([errBuffer, data])
+      })
+
+      process.on('close', code => {
+        return code === 0 ? resolve(errBuffer) : reject(errBuffer)
+      })
+    })
   }
 
-  deleteBranchHandler (req) {
+  async deleteBranchHandler (req) {
     const { url, repo, key, branch } = this.parsePushCommand(req)
-    // TODO:
-    // check ACL
-    // collect stdout to buffer and return it
-    // const process = spawn('git', ['branch', '-d', branch], { env: { GIT_DIR: home.getCodePath(repo) } })
-    console.error('req', req.toString())
-    console.error('deleteBranchHandler not implemented')
+    // TODO: check ACL
+    return await new Promise((resolve, reject) => {
+      const process = spawn('git', ['branch', '-D', branch], { env: { GIT_DIR: home.getCodePath(repo) } })
+      let errBuffer = Buffer.from('')
+      process.stderr.on('data', data => {
+        errBuffer = Buffer.concat([errBuffer, data])
+      })
+
+      process.on('close', code => {
+        return code === 0 ? resolve(errBuffer) : reject(errBuffer)
+      })
+    })
   }
 
   parsePushCommand(req) {
