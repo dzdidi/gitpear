@@ -96,14 +96,14 @@ async function talkToGit (refs, drive, repoName, rpc) {
       if (isDelete) {
         command = 'd-branch'
       } else if (isForce) {
+        console.warn('To', url)
         await git.push(src, isForce)
         src = src.replace('+', '')
         command = 'f-push'
-        console.warn('To', url)
       } else {
+        console.warn('To', url)
         await git.push(src)
         command = 'push'
-        console.warn('To', url)
       }
 
       const publicKey = home.readPk()
