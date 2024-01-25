@@ -11,6 +11,7 @@ const crypto = require('hypercore-crypto')
 
 const git = require('./git.js')
 const home = require('./home')
+const acl = require('./acl')
 
 const fs = require('fs')
 
@@ -39,7 +40,12 @@ swarm.on('connection', async (socket) => {
   store.replicate(socket)
   const rpc = new ProtomuxRPC(socket)
 
-  const reposRes = await rpc.request('get-repos')
+  let payload = { body: { url, method: 'get-repos' } }
+  if (process.env.GIT_PEAR_AUTH) {
+    payload.header = await acl.getToken(payload.body)
+  }
+
+  const reposRes = await rpc.request('get-repos', Buffer.from(JSON.stringify(payload)))
   const repositories = JSON.parse(reposRes.toString())
   if (!repositories) {
     console.error('Failed to retrieve repositories')
@@ -65,12 +71,21 @@ swarm.on('connection', async (socket) => {
 
   await drive.core.update({ wait: true })
 
-  const refsRes = await rpc.request('get-refs', Buffer.from(repoName))
+  // TODO: ACL
+  payload = { body: { url, method: 'get-refs', data: repoName }}
+  if (process.env.GIT_PEAR_AUTH) {
+    payload.header = await acl.getToken(payload.body)
+  }
+  const refsRes = await rpc.request('get-refs', Buffer.from(JSON.stringify(payload)))
 
-  await talkToGit(JSON.parse(refsRes.toString()), drive, repoName, rpc)
+  let commit 
+  try {
+    commit = await git.getCommit()
+  } catch (e) { }
+  await talkToGit(JSON.parse(refsRes.toString()), drive, repoName, rpc, commit)
 })
 
-async function talkToGit (refs, drive, repoName, rpc) {
+async function talkToGit (refs, drive, repoName, rpc, commit) {
   process.stdin.setEncoding('utf8')
   const didFetch = false
   process.stdin.on('readable', async function () {
@@ -92,22 +107,30 @@ async function talkToGit (refs, drive, repoName, rpc) {
 
       dst = dst.replace('refs/heads/', '').replace('\n\n', '')
 
-      let command
+      let method
       if (isDelete) {
-        command = 'd-branch'
+        method = 'd-branch'
       } else if (isForce) {
         console.warn('To', url)
         await git.push(src, isForce)
         src = src.replace('+', '')
-        command = 'f-push'
+        method = 'f-push'
       } else {
         console.warn('To', url)
         await git.push(src)
-        command = 'push'
+        method = 'push'
       }
 
       const publicKey = home.readPk()
-      const res = await rpc.request(command, Buffer.from(`${publicKey}/${repoName}:${dst}`))
+      let payload = { body: {
+        url: `pear://${publicKey}/${repoName}`,
+        data: `${dst}#${commit}`,
+        method
+      } }
+      if (process.env.GIT_PEAR_AUTH) {
+        payload.header = await acl.getToken(payload.body)
+      }
+      const res = await rpc.request(method, Buffer.from(JSON.stringify(payload)))
 
       process.stdout.write('\n\n')
       process.exit(0)

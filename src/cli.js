@@ -32,6 +32,8 @@ program
     const name = fullPath.split(path.sep).pop()
     if ((home.isInitialized(name))) {
       console.error(`${name} is already initialized`)
+      await git.addRemote(name)
+      console.log(`Added git remote for "${name}" as "pear"`)
       process.exit(1)
     }
 

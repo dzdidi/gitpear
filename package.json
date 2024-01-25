@@ -46,6 +46,7 @@
     "corestore": "^6.15.13",
     "hyperdrive": "^11.6.3",
     "hyperswarm": "^4.7.13",
+    "nostr-tools": "^2.1.5",
     "protomux-rpc": "^1.5.1",
     "random-access-memory": "^6.2.0"
   }

@@ -14,6 +14,10 @@ function shareAppFolder (name) {
   fs.openSync(`${APP_HOME}/${name}/.git-daemon-export-ok`, 'w')
 }
 
+function shareWith (userId, branch = '*', permissions = 'rw') {
+  fs.appendFileSync(`${APP_HOME}/.git-daemon-export-ok`, `${userId}:${branch}:${permissions}\n`)
+}
+
 function unshareAppFolder (name) {
   fs.unlinkSync(`${APP_HOME}/${name}/.git-daemon-export-ok`)
 }
@@ -119,5 +123,6 @@ module.exports = {
   storeDaemonPid,
   getDaemonPid,
   isDaemonRunning,
-  removeDaemonPid
+  removeDaemonPid,
+  shareWith,
 }

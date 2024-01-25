@@ -1,6 +1,7 @@
 const ProtomuxRPC = require('protomux-rpc')
 const { spawn } = require('child_process')
 const home = require('./home')
+const acl = require('./acl')
 
 module.exports = class RPC {
   constructor (announcedRefs, repositories, drives) {
@@ -19,92 +20,98 @@ module.exports = class RPC {
     // which can in turn be stored in a .git-daemon-export-ok file
 
     /* -- PULL HANDLERS -- */
-    rpc.respond('get-repos', req => this.getReposHandler(req))
-    rpc.respond('get-refs', async req => await this.getRefsHandler(req))
+    rpc.respond('get-repos', async req => await this.getReposHandler(req))
+    rpc.respond('get-refs',  async req => await this.getRefsHandler(req))
 
     /* -- PUSH HANDLERS -- */
-    rpc.respond('push', async req => await this.pushHandler(req))
-    rpc.respond('f-push', async req => await this.forcePushHandler(req))
+    rpc.respond('push',     async req => await this.pushHandler(req))
+    rpc.respond('f-push',   async req => await this.forcePushHandler(req))
     rpc.respond('d-branch', async req => await this.deleteBranchHandler(req))
 
     this.connections[peerInfo.publicKey] = rpc
   }
 
-  getReposHandler (_req) {
+  async getReposHandler (req) {
+    const { branch, url } = await this.parseReq(req)
+
     const res = {}
-    for (const repo in this.repositories) {
-      res[repo] = this.drives[repo].key.toString('hex')
+    for (const repoName in this.repositories) {
+      // TODO: add only public repos and those which are shared with the peer
+      // Alternatively return only requested repo
+      res[repoName] = this.drives[repoName].key.toString('hex')
     }
     return Buffer.from(JSON.stringify(res))
   }
 
-  getRefsHandler (req) {
-    const res = this.repositories[req.toString()]
+  async getRefsHandler (req) {
+    const { repoName, branch, url } = await this.parseReq(req)
+    const res = this.repositories[repoName]
 
     return Buffer.from(JSON.stringify(res))
   }
 
   async pushHandler (req) {
-    const { url, repo, key, branch } = this.parsePushCommand(req)
-    // TODO: check ACL
+    const { url, repoName, branch } = await this.parseReq(req)
     return await new Promise((resolve, reject) => {
-      const process = spawn('git', ['fetch', url, `${branch}:${branch}`], { env: { GIT_DIR: home.getCodePath(repo) } })
+      const env = { ...process.env, GIT_DIR: home.getCodePath(repoName) }
+      const child = spawn('git', ['fetch', url, `${branch}:${branch}`], { env })
       let errBuffer = Buffer.from('')
-      process.stderr.on('data', data => {
+      child.stderr.on('data', data => {
         errBuffer = Buffer.concat([errBuffer, data])
       })
 
-      process.on('close', code => {
+      child.on('close', code => {
         return code === 0 ? resolve(errBuffer) : reject(errBuffer)
       })
     })
   }
 
   async forcePushHandler (req) {
-    const { url, repo, key, branch } = this.parsePushCommand(req)
-    // TODO: check ACL
+    const { url, repoName, branch } = await this.parseReq(req)
     return await new Promise((resolve, reject) => {
-      const process = spawn('git', ['fetch', url, `${branch}:${branch}`, '--force'], { env: { GIT_DIR: home.getCodePath(repo) } })
+      const env = { ...process.env, GIT_DIR: home.getCodePath(repoName) }
+      const child = spawn('git', ['fetch', url, `${branch}:${branch}`, '--force'], { env })
       let errBuffer = Buffer.from('')
-      process.stderr.on('data', data => {
+      child.stderr.on('data', data => {
         errBuffer = Buffer.concat([errBuffer, data])
       })
 
-      process.on('close', code => {
+      child.on('close', code => {
         return code === 0 ? resolve(errBuffer) : reject(errBuffer)
       })
     })
   }
 
   async deleteBranchHandler (req) {
-    const { url, repo, key, branch } = this.parsePushCommand(req)
-    // TODO: check ACL
+    const { url, repoName, branch } = await this.parseReq(req)
     return await new Promise((resolve, reject) => {
-      const process = spawn('git', ['branch', '-D', branch], { env: { GIT_DIR: home.getCodePath(repo) } })
+      const env = { ...process.env, GIT_DIR: home.getCodePath(repoName) }
+      const child = spawn('git', ['branch', '-D', branch], { env })
       let errBuffer = Buffer.from('')
-      process.stderr.on('data', data => {
+      child.stderr.on('data', data => {
         errBuffer = Buffer.concat([errBuffer, data])
       })
 
-      process.on('close', code => {
+      child.on('close', code => {
         return code === 0 ? resolve(errBuffer) : reject(errBuffer)
       })
     })
   }
 
-  parsePushCommand(req) {
-    const [url, branch] = req.toString().split(':')
-    const [key, repo] = url.split('/')
-    return {
-      url: `pear://${url}`,
-      repo,
-      key,
-      branch
+  async parseReq(req) {
+    let payload
+    let request = JSON.parse(req.toString())
+    if (process.env.GIT_PEAR_AUTH) {
+      payload = await acl.getId({
+        ...request.body,
+        payload: request.header
+      })
     }
-  }
 
-  loadACL(repoName) {
-    // TODO: read contact of .git-daemon-export-ok
-    // find key and its permissions
+    return {
+      repoName: request.body.url?.split('/')?.pop(),
+      branch: request.body.data?.split('#')[0],
+      url: request.body.url
+    }
   }
 }

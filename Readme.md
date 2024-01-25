@@ -48,7 +48,7 @@ All data will be persisted in application directory (default `~/.gitpear`). To c
 
 * `git pear list [-s, --shared]` - list all or (only shared) repositories
 
-## Usage example
+## Usage example (NO PUSH)
 
 Please not this is only remote helper and its intention is only to enable direct `clone|fetch|pull` of repository hosted on private computer.
 
@@ -94,3 +94,5 @@ git checkout master
 git fetch origin
 git pull
 ```
+
+## Usage example (PUSH)
