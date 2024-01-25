@@ -101,17 +101,24 @@ module.exports = class RPC {
   async parseReq(req) {
     let payload
     let request = JSON.parse(req.toString())
+    const result = {
+      repoName: request.body.url?.split('/')?.pop(),
+      branch: request.body.data?.split('#')[0],
+      url: request.body.url
+    }
     if (process.env.GIT_PEAR_AUTH) {
       payload = await acl.getId({
         ...request.body,
         payload: request.header
       })
+      // read .git-daemon-export-ok 
+      // check if payload.userId is presenet there
+      const aclList = home.getACL(result.repoName)
+      if (!aclList.includes(payload.userId)) {
+        throw new Error(`You are not allowed to access this repo: ${payload.userId}`)
+      }
     }
 
-    return {
-      repoName: request.body.url?.split('/')?.pop(),
-      branch: request.body.data?.split('#')[0],
-      url: request.body.url
-    }
+    return result
   }
 }

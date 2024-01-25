@@ -30,6 +30,10 @@ function isShared (name) {
   return fs.existsSync(`${APP_HOME}/${name}/.git-daemon-export-ok`)
 }
 
+function getACL (name) {
+  return fs.readFileSync(`${APP_HOME}/${name}/.git-daemon-export-ok`).toString().split('\n').filter(Boolean)
+}
+
 function list (sharedOnly) {
   const repos = fs.readdirSync(APP_HOME)
   if (!sharedOnly) return repos.filter(r => !r.startsWith('.') && isInitialized(r))
@@ -125,4 +129,5 @@ module.exports = {
   isDaemonRunning,
   removeDaemonPid,
   shareWith,
+  getACL,
 }
