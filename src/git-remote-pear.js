@@ -28,21 +28,21 @@ const repoName = matches[2]
 const store = new Corestore(RAM)
 const swarm = new Hyperswarm({ keypair: home.getKeyPair() })
 
-// let daemonPid
-// if (!home.isDaemonRunning()) {
-//   const opts = {
-//    detached: true,
-//    stdio: [ 'ignore', home.getOutStream(), home.getErrStream() ]
-//   }
-//   const daemon = spawn('git-peard', opts)
-//   daemonPid = daemon.pid
-//   home.storeDaemonPid(daemonPid)
-//   // TODO: remove in case of error or exit but allow unref
-//   // daemon.on('error', home.removeDaemonPid)
-//   // daemon.on('exit', home.removeDaemonPid)
-//   console.error('started daemon', daemonPid)
-//   daemon.unref()
-// }
+let daemonPid
+if (!home.isDaemonRunning()) {
+  const opts = {
+   detached: true,
+   stdio: [ 'ignore', home.getOutStream(), home.getErrStream() ]
+  }
+  const daemon = spawn('git-peard', opts)
+  daemonPid = daemon.pid
+  home.storeDaemonPid(daemonPid)
+  // TODO: remove in case of error or exit but allow unref
+  // daemon.on('error', home.removeDaemonPid)
+  // daemon.on('exit', home.removeDaemonPid)
+  console.error('started daemon', daemonPid)
+  daemon.unref()
+}
 
 swarm.join(crypto.discoveryKey(Buffer.from(targetKey, 'hex')), { server: false })
 
@@ -110,17 +110,20 @@ async function talkToGit (refs, drive, repoName, rpc) {
         await git.push(src, isForce)
         src = src.replace('+', '')
         command = 'f-push'
+        console.warn('To', url)
       } else {
-        console.warn('pushing', src, dst)
         await git.push(src)
         command = 'push'
+        console.warn('To', url)
       }
 
       const publicKey = home.readPk()
       const res = await rpc.request(command, Buffer.from(`${publicKey}/${repoName}:${dst}`))
 
-      // process.kill(daemonPid || home.getDaemonPid())
-      // home.removeDaemonPid()
+      if (daemonPid) {
+        process.kill(daemonPid)
+        home.removeDaemonPid()
+      }
 
       process.stdout.write('\n\n')
       process.exit(0)
