@@ -43,6 +43,7 @@ function getACL (name) {
     const [userId, branch, permissions] = entry.split('\t')
     res[userId] = { branch, permissions }
   }
+  return res
 }
 
 function list (sharedOnly) {
