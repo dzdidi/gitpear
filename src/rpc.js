@@ -107,6 +107,8 @@ module.exports = class RPC {
       url: request.body.url
     }
     if (process.env.GIT_PEAR_AUTH) {
+      if (!request.header) throw new Error('You are not allowed to access this repo')
+
       payload = await acl.getId({
         ...request.body,
         payload: request.header
@@ -115,7 +117,7 @@ module.exports = class RPC {
       // check if payload.userId is presenet there
       const aclList = home.getACL(result.repoName)
       if (!aclList.includes(payload.userId)) {
-        throw new Error(`You are not allowed to access this repo: ${payload.userId}`)
+        throw new Error('You are not allowed to access this repo')
       }
     }
 
