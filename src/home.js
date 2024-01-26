@@ -15,7 +15,13 @@ function shareAppFolder (name) {
 }
 
 function shareWith (userId, branch = '*', permissions = 'rw') {
-  fs.appendFileSync(`${APP_HOME}/.git-daemon-export-ok`, `${userId}:${branch}:${permissions}\n`)
+  if (!fs.existsSync(`${APP_HOME}/.git-daemon-export-ok`)) {
+    fs.writeFileSync(`${APP_HOME}/.git-daemon-export-ok`, '')
+  }
+  if (permissions.split('').some(p => !['r', 'w'].includes(p))) {
+    throw new Error('Permissions must be r, w or rw')
+  }
+  fs.appendFileSync(`${APP_HOME}/.git-daemon-export-ok`, `${userId}\t${branch}\t${permissions}\n`)
 }
 
 function unshareAppFolder (name) {
@@ -31,7 +37,12 @@ function isShared (name) {
 }
 
 function getACL (name) {
-  return fs.readFileSync(`${APP_HOME}/${name}/.git-daemon-export-ok`).toString().split('\n').filter(Boolean)
+  const entries = fs.readFileSync(`${APP_HOME}/${name}/.git-daemon-export-ok`).toString().split('\n').filter(Boolean)
+  const res = {}
+  for (const entry of entries) {
+    const [userId, branch, permissions] = entry.split('\t')
+    res[userId] = { branch, permissions }
+  }
 }
 
 function list (sharedOnly) {
