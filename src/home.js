@@ -21,6 +21,19 @@ function shareWith (userId, branch = '*', permissions = 'rw') {
   if (permissions.split('').some(p => !['r', 'w'].includes(p))) {
     throw new Error('Permissions must be r, w or rw')
   }
+  // TODO: read file
+  // generate new conent
+  // merge with old file
+  // store file
+  //
+  // EXAMPLE:
+  // {
+  //   protectedBranches: ['master'],
+  //   ACL: {
+  //     '<userId>': { '<branch name | *>': 'r|w|rw' },
+  //     '*': { '*': 'r' }
+  //   }
+  // }
   fs.appendFileSync(`${APP_HOME}/.git-daemon-export-ok`, `${userId}\t${branch}\t${permissions}\n`)
 }
 
@@ -41,9 +54,11 @@ function getACL (name) {
   const res = {}
   for (const entry of entries) {
     const [userId, branch, permissions] = entry.split('\t')
-    res[userId] = { branch, permissions }
+    if (!res[userId]) res[userId] = []
+    res[userId].push({ branch, permissions })
   }
   return res
+  // TODO: have protected branch setting - the ACL must be assigned explicitly
 }
 
 function list (sharedOnly) {

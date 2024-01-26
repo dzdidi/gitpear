@@ -98,7 +98,7 @@ module.exports = class RPC {
     })
   }
 
-  async parseReq(req) {
+  async parseReq(req, access, branch = '*') {
     let payload
     let request = JSON.parse(req.toString())
     const result = {
@@ -106,17 +106,12 @@ module.exports = class RPC {
       branch: request.body.data?.split('#')[0],
       url: request.body.url
     }
-    if (process.env.GIT_PEAR_AUTH) {
-      if (!request.header) throw new Error('You are not allowed to access this repo')
+    if (!process.env.GIT_PEAR_AUTH) return result
+    if (!request.header) throw new Error('You are not allowed to access this repo')
 
-      payload = await acl.getId({ ...request.body, payload: request.header })
-      const aclList = home.getACL(result.repoName)
-      // TODO: read specific permissions for the user
-      if (!Object.keys(aclList).includes(payload.userId)) {
-        throw new Error('You are not allowed to access this repo')
-      }
-    }
+    payload = await acl.getId({ ...request.body, payload: request.header })
+    const aclList = home.getACL(result.repoName)
+    const userACL = aclList[payload.userId]
+    if (!userACL) throw new Error('You are not allowed to access this repo')
 
-    return result
-  }
-}
+    if (result.branch !== 'master'
