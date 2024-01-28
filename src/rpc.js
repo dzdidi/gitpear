@@ -157,9 +157,9 @@ module.exports = class RPC {
     return parsed
   }
 
-  async authenticate (publicKey, req) {
-    if (!process.env.GIT_PEAR_AUTH) return publicKey
-    if (process.env.GIT_PEAR_AUTH === 'naitive') return publicKey
+  async authenticate (publicKey, request) {
+    if (!process.env.GIT_PEAR_AUTH) return publicKey.toString('hex')
+    if (process.env.GIT_PEAR_AUTH === 'naitive') return publicKey.toString('hex')
     if (process.env.GIT_PEAR_AUTH !== 'naitive' && !request.header) {
       throw new Error('You are not allowed to access this repo')
     }
