@@ -68,6 +68,7 @@ program
     process.exit(1)
   })
 
+
 program
   .command('unshare')
   .description('unshare a gitpear repo')

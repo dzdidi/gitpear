@@ -10,31 +10,37 @@ function createAppFolder (name) {
   fs.mkdirSync(`${APP_HOME}/${name}/code`, { recursive: true })
 }
 
-function shareAppFolder (name) {
-  fs.openSync(`${APP_HOME}/${name}/.git-daemon-export-ok`, 'w')
+function shareAppFolder (name, entry) {
+  const p = `${APP_HOME}/${name}/.git-daemon-export-ok`
+  fs.openSync(p, 'a')
+  const aclFile = fs.readFileSync(p, 'utf8')
+  const aclJson = JSON.parse(aclFile || '{ "protectedBranches": ["master"], "ACL": {}}')
+
+  let [userId = '*', permissions = 'r', branch = '*'] = entry?.split(':') || []
+
+  if (!aclJson.ACL[userId]) aclJson[userId] = { [branch]: permissions }
+  fs.writeFileSync(p, JSON.stringify(aclJson))
 }
 
-function shareWith (userId, branch = '*', permissions = 'rw') {
-  if (!fs.existsSync(`${APP_HOME}/.git-daemon-export-ok`)) {
-    fs.writeFileSync(`${APP_HOME}/.git-daemon-export-ok`, '')
-  }
-  if (permissions.split('').some(p => !['r', 'w'].includes(p))) {
-    throw new Error('Permissions must be r, w or rw')
-  }
-  // TODO: read file
-  // generate new conent
-  // merge with old file
-  // store file
-  //
-  // EXAMPLE:
-  // {
-  //   protectedBranches: ['master'],
-  //   ACL: {
-  //     '<userId>': { '<branch name | *>': 'r|w|rw' },
-  //     '*': { '*': 'r' }
-  //   }
-  // }
-  fs.appendFileSync(`${APP_HOME}/.git-daemon-export-ok`, `${userId}\t${branch}\t${permissions}\n`)
+function addProtectedBranch (name, branch) {
+  const aclFile = fs.readFileSync(`${APP_HOME}/${name}/.git-daemon-export-ok`, 'utf8')
+  const aclJson = JSON.parse(aclFile || '{ "protectedBranches": [], "ACL": {}}')
+  if (!aclJson.protectedBranches.includes(branch)) aclJson.protectedBranches.push(branch)
+  fs.writeFileSync(aclFile, JSON.stringify(aclJson))
+}
+
+function removeProtectedBranch (name, branch) {
+  const aclFile = fs.readFileSync(`${APP_HOME}/${name}/.git-daemon-export-ok`, 'a')
+  const aclJson = JSON.parse(aclFile || '{ "protectedBranches": [], "ACL": {}}')
+  aclJson.protectedBranches = aclJson.protectedBranches.filter(b => b !== branch)
+  fs.writeFileSync(aclFile, JSON.stringify(aclJson))
+}
+
+function removeUserFromACL (name, userId) {
+  const aclFile = fs.readFileSync(`${APP_HOME}/${name}/.git-daemon-export-ok`, 'a')
+  const aclJson = JSON.parse(aclFile || '{ "protectedBranches": [], "ACL": {}}')
+  delete aclJson.ACL[userId]
+  fs.writeFileSync(aclFile, JSON.stringify(aclJson))
 }
 
 function unshareAppFolder (name) {
@@ -50,15 +56,11 @@ function isShared (name) {
 }
 
 function getACL (name) {
-  const entries = fs.readFileSync(`${APP_HOME}/${name}/.git-daemon-export-ok`).toString().split('\n').filter(Boolean)
-  const res = {}
-  for (const entry of entries) {
-    const [userId, branch, permissions] = entry.split('\t')
-    if (!res[userId]) res[userId] = []
-    res[userId].push({ branch, permissions })
-  }
-  return res
-  // TODO: have protected branch setting - the ACL must be assigned explicitly
+  if (!fs.existsSync(`${APP_HOME}/${name}/.git-daemon-export-ok`)) throw new Error('Repo is not shared')
+
+  const aclFile = fs.readFileSync(`${APP_HOME}/${name}/.git-daemon-export-ok`, 'r')
+  aclJson = JSON.parse(aclFile || '{ "protectedBranches": [], "ACL": {}}')
+  return aclJson
 }
 
 function list (sharedOnly) {
@@ -155,6 +157,5 @@ module.exports = {
   getDaemonPid,
   isDaemonRunning,
   removeDaemonPid,
-  shareWith,
   getACL,
 }

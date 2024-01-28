@@ -20,19 +20,19 @@ module.exports = class RPC {
     // which can in turn be stored in a .git-daemon-export-ok file
 
     /* -- PULL HANDLERS -- */
-    rpc.respond('get-repos', async req => await this.getReposHandler(req))
-    rpc.respond('get-refs',  async req => await this.getRefsHandler(req))
+    rpc.respond('get-repos', async req => await this.getReposHandler(peerInfo.publicKey, req))
+    rpc.respond('get-refs',  async req => await this.getRefsHandler(peerInfo.publicKey, req))
 
     /* -- PUSH HANDLERS -- */
-    rpc.respond('push',     async req => await this.pushHandler(req))
-    rpc.respond('f-push',   async req => await this.forcePushHandler(req))
-    rpc.respond('d-branch', async req => await this.deleteBranchHandler(req))
+    rpc.respond('push',     async req => await this.pushHandler(peerInfo.publicKey, req))
+    rpc.respond('f-push',   async req => await this.forcePushHandler(peerInfo.publicKey, req))
+    rpc.respond('d-branch', async req => await this.deleteBranchHandler(peerInfo.publicKey, req))
 
     this.connections[peerInfo.publicKey] = rpc
   }
 
-  async getReposHandler (req) {
-    const { branch, url } = await this.parseReq(req)
+  async getReposHandler (publicKey, req) {
+    const { branch, url } = await this.parseReq(publicKey, req, 'r')
 
     const res = {}
     for (const repoName in this.repositories) {
@@ -43,15 +43,15 @@ module.exports = class RPC {
     return Buffer.from(JSON.stringify(res))
   }
 
-  async getRefsHandler (req) {
-    const { repoName, branch, url } = await this.parseReq(req)
+  async getRefsHandler (publicKey, req) {
+    const { repoName, branch, url } = await this.parseReq(publicKey, req, 'r')
     const res = this.repositories[repoName]
 
     return Buffer.from(JSON.stringify(res))
   }
 
-  async pushHandler (req) {
-    const { url, repoName, branch } = await this.parseReq(req)
+  async pushHandler (publicKey, req) {
+    const { url, repoName, branch } = await this.parseReq(publicKey, req, 'w')
     return await new Promise((resolve, reject) => {
       const env = { ...process.env, GIT_DIR: home.getCodePath(repoName) }
       const child = spawn('git', ['fetch', url, `${branch}:${branch}`], { env })
@@ -66,8 +66,8 @@ module.exports = class RPC {
     })
   }
 
-  async forcePushHandler (req) {
-    const { url, repoName, branch } = await this.parseReq(req)
+  async forcePushHandler (publicKey, req) {
+    const { url, repoName, branch } = await this.parseReq(publicKey, req, 'w')
     return await new Promise((resolve, reject) => {
       const env = { ...process.env, GIT_DIR: home.getCodePath(repoName) }
       const child = spawn('git', ['fetch', url, `${branch}:${branch}`, '--force'], { env })
@@ -82,8 +82,8 @@ module.exports = class RPC {
     })
   }
 
-  async deleteBranchHandler (req) {
-    const { url, repoName, branch } = await this.parseReq(req)
+  async deleteBranchHandler (publicKey, req) {
+    const { url, repoName, branch } = await this.parseReq(publicKey, req, 'w')
     return await new Promise((resolve, reject) => {
       const env = { ...process.env, GIT_DIR: home.getCodePath(repoName) }
       const child = spawn('git', ['branch', '-D', branch], { env })
@@ -98,20 +98,41 @@ module.exports = class RPC {
     })
   }
 
-  async parseReq(req, access, branch = '*') {
-    let payload
+  async parseReq(publicKey, req, access, branch = '*') {
+    if (!req) throw new Error('Request is empty')
     let request = JSON.parse(req.toString())
-    const result = {
+    const parsed = {
       repoName: request.body.url?.split('/')?.pop(),
       branch: request.body.data?.split('#')[0],
       url: request.body.url
     }
-    if (!process.env.GIT_PEAR_AUTH) return result
-    if (!request.header) throw new Error('You are not allowed to access this repo')
+    if (!process.env.GIT_PEAR_AUTH) return parsed
 
-    payload = await acl.getId({ ...request.body, payload: request.header })
-    const aclList = home.getACL(result.repoName)
-    const userACL = aclList[payload.userId]
+    if (process.env.GIT_PEAR_AUTH !== 'naitive' && !request.header) {
+      throw new Error('You are not allowed to access this repo')
+    }
+
+    let userId
+    if (process.env.GIT_PEAR_AUTH === 'naitive') {
+      userId = publicKey
+    } else {
+      userId = (await acl.getId({ ...request.body, payload: request.header })).userId
+    }
+    const aclObj = home.getACL(parsed.repoName)
+    const userACL = aclObj[userId] || aclObj['*']
     if (!userACL) throw new Error('You are not allowed to access this repo')
 
-    if (result.branch !== 'master'
+    if (aclObj.protectecBranches.includes(branch)) {
+      // protected branch must have exaplicit access grant
+      if (access === 'w') {
+
+      } else {
+        // 
+      }
+    } else {
+      
+    }
+
+    return parsed
+  }
+}
