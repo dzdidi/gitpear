@@ -40,6 +40,8 @@ test('e2e', async t => {
     clientStore.replicate(socket)
     const rpc = new ProtomuxRPC(socket)
 
+    const repoName = 'foo'
+    const url = `${serverSwarm.keyPair.publicKey.toString('hex')}/${repoName}`
     let payload = Buffer.from(JSON.stringify({ body: { url, method: 'get-repos' } }))
     const reposRes = await rpc.request('get-repos', payload)
     const reposJSON = JSON.parse(reposRes.toString())
@@ -54,7 +56,7 @@ test('e2e', async t => {
 
     await drive.core.update({ wait: true })
 
-    payload = Buffer.from(JSON.stringify({ body: { url, method: 'get-refs', data: 'foo' }}))
+    payload = Buffer.from(JSON.stringify({ body: { url, method: 'get-refs', data: repoName }}))
     const refsRes = await rpc.request('get-refs', payload)
     t.ok(refsRes)
 
