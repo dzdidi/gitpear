@@ -147,7 +147,7 @@ module.exports = class RPC {
 
   async parseReq(publicKey, req) {
     if (!req) throw new Error('Request is empty')
-    let request = JSON.parse(req.toString())
+    const request = JSON.parse(req.toString())
     const parsed = {
       repoName: request.body.url?.split('/')?.pop(),
       branch: request.body.data?.split('#')[0],
@@ -159,10 +159,7 @@ module.exports = class RPC {
 
   async authenticate (publicKey, request) {
     if (!process.env.GIT_PEAR_AUTH) return publicKey.toString('hex')
-    if (process.env.GIT_PEAR_AUTH === 'naitive') return publicKey.toString('hex')
-    if (process.env.GIT_PEAR_AUTH !== 'naitive' && !request.header) {
-      throw new Error('You are not allowed to access this repo')
-    }
+    if (!request.header) throw new Error('You are not allowed to access this repo')
 
     return (await auth.getId({ ...request.body, payload: request.header })).userId
   }
