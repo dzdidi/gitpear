@@ -9,33 +9,33 @@ test('getAppHome', t => {
 })
 
 test('createAppFolder, share, is shared, unshare, isInitialized, list, getCodePath', t => {
-  home.createAppFolder('test')
+  home.createAppFolder('test_code')
 
-  t.ok(fs.existsSync(path.join(home.APP_HOME, 'test', 'code')))
+  t.ok(fs.existsSync(path.join(home.APP_HOME, 'test_code', 'code')))
 
-  t.absent(home.isShared('test'))
-  t.absent(fs.existsSync(path.join(home.APP_HOME, 'test', '.git-daemon-export-ok')))
+  t.absent(home.isShared('test_code'))
+  t.absent(fs.existsSync(path.join(home.APP_HOME, 'test_code', '.git-daemon-export-ok')))
 
-  home.shareAppFolder('test')
+  home.shareAppFolder('test_code')
 
-  t.ok(home.isShared('test'))
-  t.ok(fs.existsSync(path.join(home.APP_HOME, 'test', '.git-daemon-export-ok')))
+  t.ok(home.isShared('test_code'))
+  t.ok(fs.existsSync(path.join(home.APP_HOME, 'test_code', '.git-daemon-export-ok')))
 
-  home.unshareAppFolder('test')
+  home.unshareAppFolder('test_code')
 
-  t.absent(home.isShared('test'))
-  t.absent(fs.existsSync(path.join(home.APP_HOME, 'test', '.git-daemon-export-ok')))
+  t.absent(home.isShared('test_code'))
+  t.absent(fs.existsSync(path.join(home.APP_HOME, 'test_code', '.git-daemon-export-ok')))
 
-  t.absent(home.isInitialized('test'))
+  t.absent(home.isInitialized('test_code'))
   t.ok(home.isInitialized('foo'))
 
   t.alike(new Set(home.list()), new Set(['foo', 'bar', 'zar']))
   t.alike(new Set(home.list(true)), new Set(['foo', 'bar']))
 
-  t.alike(path.resolve(home.getCodePath('test')), path.resolve(path.join(home.APP_HOME, 'test', 'code')))
+  t.alike(path.resolve(home.getCodePath('test_code')), path.resolve(path.join(home.APP_HOME, 'test_code', 'code')))
 
   t.teardown(() => {
-    fs.rmSync(path.join(home.APP_HOME, 'test', 'code'), { recursive: true })
+    fs.rmSync(path.join(home.APP_HOME, 'test_code'), { recursive: true })
   })
 })
 

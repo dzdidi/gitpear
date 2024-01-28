@@ -18,7 +18,7 @@ function shareAppFolder (name, entry) {
 
   let [userId = '*', permissions = 'r', branch = '*'] = entry?.split(':') || []
 
-  if (!aclJson.ACL[userId]) aclJson[userId] = { [branch]: permissions }
+  if (!aclJson.ACL[userId]) aclJson.ACL[userId] = { [branch]: permissions }
   fs.writeFileSync(p, JSON.stringify(aclJson))
 }
 
@@ -58,7 +58,7 @@ function isShared (name) {
 function getACL (name) {
   if (!fs.existsSync(`${APP_HOME}/${name}/.git-daemon-export-ok`)) throw new Error('Repo is not shared')
 
-  const aclFile = fs.readFileSync(`${APP_HOME}/${name}/.git-daemon-export-ok`, 'r')
+  const aclFile = fs.readFileSync(`${APP_HOME}/${name}/.git-daemon-export-ok`, 'utf8')
   aclJson = JSON.parse(aclFile || '{ "protectedBranches": [], "ACL": {}}')
   return aclJson
 }
