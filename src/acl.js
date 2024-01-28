@@ -53,6 +53,12 @@ function grantAccessToUser (repoName, user, role) {
   setACL(repoName, acl)
 }
 
+function revokeAccessFromUser (repoName, user) {
+  const acl = getACL(repoName)
+  delete acl.ACL[user]
+  setACL(repoName, acl)
+}
+
 function addProtectedBranch (repoName, branch) {
   const acl = getACL(repoName)
   acl.protectedBranches.push(branch)
@@ -109,4 +115,5 @@ module.exports = {
   getAdmins,
   getContributors,
   getViewers,
+  revokeAccessFromUser,
 }

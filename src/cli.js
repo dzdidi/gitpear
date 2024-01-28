@@ -9,6 +9,7 @@ const path = require('path')
 const fs = require('fs')
 
 const home = require('./home')
+const acl = require('./acl')
 const git = require('./git')
 
 const pkg = require('../package.json')
@@ -46,6 +47,7 @@ program
 
     if (options.share) {
       home.shareAppFolder(name)
+      acl.setACL(name)
       await git.push()
       console.log(`Shared "${name}" project`)
     }
@@ -55,26 +57,109 @@ program
   .command('share')
   .description('share a gitpear repo')
   .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
-  .action(async (p, options) => {
-    const name = path.resolve(p).split(path.sep).pop()
-    if ((home.isInitialized(name))) {
-      home.shareAppFolder(name)
-      await git.push()
-      console.log(`Shared "${name}" project`)
+  .addArgument(new commander.Argument('[v]', 'visibility of the repo').default('public'))
+  .action(async (p, v, options) => {
+    const fullPath = path.resolve(p)
+    if (!fs.existsSync(path.join(fullPath, '.git'))) {
+      console.error('Not a git repo')
+      process.exit(1)
+    }
+
+    const name = fullPath.split(path.sep).pop()
+    if (!home.isInitialized(name)) {
+      console.error(`${name} is not initialized`)
+      process.exit(1)
+    }
+
+    home.shareAppFolder(name)
+    acl.setACL(name, { visibility: v })
+    await git.push()
+    console.log(`Shared "${name}" project, as ${v} repo`)
+    return
+  })
+
+program
+  .command('acl')
+  .description('set acl of a gitpear repo')
+  .addArgument(new commander.Argument('[a]', 'actiont to perform').choices(['add', 'remove', 'list']).default('list'))
+  .addArgument(new commander.Argument('[u]', 'user to add/remove/list').default(''))
+  .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
+  .action(async (a, u, p, options) => {
+    const fullPath = path.resolve(p)
+    if (!fs.existsSync(path.join(fullPath, '.git'))) {
+      console.error('Not a git repo')
+      process.exit(1)
+    }
+
+    const name = fullPath.split(path.sep).pop()
+    if (!home.isInitialized(name)) {
+      console.error(`${name} is not initialized`)
+      process.exit(1)
+    }
+    const repoACL = acl.getACL(name)
+
+    if (a === 'list' && !u) {
+      console.log('Visibility:', '\t', repoACL.visibility)
+      console.log('User:', '\t', 'Role:')
+      for (const user in repoACL.ACL) {
+        console.log(user, '\t', repoACL.ACL[user])
+      }
       return
     }
 
-    console.error(`${name} is not initialized`)
-    process.exit(1)
-  })
+    if (a === 'list') {
+      console.log('Visibility:', '\t', repoACL.visibility)
+      console.log('User:', u, '\t', 'Role:', repoACL.ACL[u])
+      return
+    }
 
+    if (a === 'add') {
+      if (!u) {
+        console.error('User not provided')
+        process.exit(1)
+      }
+
+      const [ userId, role ] = u.split(':')
+      if (repoACL.ACL[userId]) {
+        console.error(`${userId} already has access to ${name} as ${repoACL.ACL[userId]}`)
+        process.exit(1)
+      }
+
+      acl.grantAccessToUser(name, userId, role)
+      console.log(`Added ${userId} to ${name} as ${role}`)
+      return
+    }
+
+    if (a === 'remove') {
+      if (!u) {
+        console.error('User not provided')
+        process.exit(1)
+      }
+
+      if (!repoACL.ACL[u]) {
+        console.error(`${u} does not have access to ${name}`)
+        process.exit(1)
+      }
+
+      acl.revokeAccessFromUser(name, u)
+      console.log(`Removed ${u} from ${name}`)
+      return
+    }
+  })
+  
 
 program
   .command('unshare')
   .description('unshare a gitpear repo')
   .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
   .action((p, options) => {
-    const name = path.resolve(p).split(path.sep).pop()
+    const fullPath = path.resolve(p)
+    if (!fs.existsSync(path.join(fullPath, '.git'))) {
+      console.error('Not a git repo')
+      process.exit(1)
+    }
+
+    const name = fullPath.split(path.sep).pop()
     if ((home.isInitialized(name))) {
       home.unshareAppFolder(name)
       console.log(`Unshared "${name}" project`)
