@@ -10,38 +10,10 @@ function createAppFolder (name) {
   fs.mkdirSync(`${APP_HOME}/${name}/code`, { recursive: true })
 }
 
-function shareAppFolder (name, entry) {
-  const p = `${APP_HOME}/${name}/.git-daemon-export-ok`
-  fs.openSync(p, 'a')
-  const aclFile = fs.readFileSync(p, 'utf8')
-  const aclJson = JSON.parse(aclFile || '{ "protectedBranches": ["master"], "ACL": {}}')
-
-  let [userId = '*', permissions = 'r', branch = '*'] = entry?.split(':') || []
-
-  if (!aclJson.ACL[userId]) aclJson.ACL[userId] = { [branch]: permissions }
-  fs.writeFileSync(p, JSON.stringify(aclJson))
+function shareAppFolder (name) {
+  fs.openSync(`${APP_HOME}/${name}/.git-daemon-export-ok`, 'w')
 }
 
-function addProtectedBranch (name, branch) {
-  const aclFile = fs.readFileSync(`${APP_HOME}/${name}/.git-daemon-export-ok`, 'utf8')
-  const aclJson = JSON.parse(aclFile || '{ "protectedBranches": [], "ACL": {}}')
-  if (!aclJson.protectedBranches.includes(branch)) aclJson.protectedBranches.push(branch)
-  fs.writeFileSync(aclFile, JSON.stringify(aclJson))
-}
-
-function removeProtectedBranch (name, branch) {
-  const aclFile = fs.readFileSync(`${APP_HOME}/${name}/.git-daemon-export-ok`, 'a')
-  const aclJson = JSON.parse(aclFile || '{ "protectedBranches": [], "ACL": {}}')
-  aclJson.protectedBranches = aclJson.protectedBranches.filter(b => b !== branch)
-  fs.writeFileSync(aclFile, JSON.stringify(aclJson))
-}
-
-function removeUserFromACL (name, userId) {
-  const aclFile = fs.readFileSync(`${APP_HOME}/${name}/.git-daemon-export-ok`, 'a')
-  const aclJson = JSON.parse(aclFile || '{ "protectedBranches": [], "ACL": {}}')
-  delete aclJson.ACL[userId]
-  fs.writeFileSync(aclFile, JSON.stringify(aclJson))
-}
 
 function unshareAppFolder (name) {
   fs.unlinkSync(`${APP_HOME}/${name}/.git-daemon-export-ok`)
@@ -57,10 +29,6 @@ function isShared (name) {
 
 function getACL (name) {
   if (!fs.existsSync(`${APP_HOME}/${name}/.git-daemon-export-ok`)) throw new Error('Repo is not shared')
-
-  const aclFile = fs.readFileSync(`${APP_HOME}/${name}/.git-daemon-export-ok`, 'utf8')
-  aclJson = JSON.parse(aclFile || '{ "protectedBranches": [], "ACL": {}}')
-  return aclJson
 }
 
 function list (sharedOnly) {

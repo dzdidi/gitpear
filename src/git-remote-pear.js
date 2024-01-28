@@ -11,7 +11,7 @@ const crypto = require('hypercore-crypto')
 
 const git = require('./git.js')
 const home = require('./home')
-const acl = require('./acl')
+const auth = require('./auth')
 
 const fs = require('fs')
 
@@ -42,7 +42,7 @@ swarm.on('connection', async (socket) => {
 
   let payload = { body: { url, method: 'get-repos' } }
   if (process.env.GIT_PEAR_AUTH) {
-    payload.header = await acl.getToken(payload.body)
+    payload.header = await auth.getToken(payload.body)
   }
 
   const reposRes = await rpc.request('get-repos', Buffer.from(JSON.stringify(payload)))
@@ -71,10 +71,9 @@ swarm.on('connection', async (socket) => {
 
   await drive.core.update({ wait: true })
 
-  // TODO: ACL
   payload = { body: { url, method: 'get-refs', data: repoName }}
   if (process.env.GIT_PEAR_AUTH) {
-    payload.header = await acl.getToken(payload.body)
+    payload.header = await auth.getToken(payload.body)
   }
   const refsRes = await rpc.request('get-refs', Buffer.from(JSON.stringify(payload)))
 
@@ -128,7 +127,7 @@ async function talkToGit (refs, drive, repoName, rpc, commit) {
         method
       } }
       if (process.env.GIT_PEAR_AUTH) {
-        payload.header = await acl.getToken(payload.body)
+        payload.header = await auth.getToken(payload.body)
       }
       const res = await rpc.request(method, Buffer.from(JSON.stringify(payload)))
 

@@ -1,7 +1,7 @@
 const ProtomuxRPC = require('protomux-rpc')
 const { spawn } = require('child_process')
 const home = require('./home')
-const acl = require('./acl')
+const auth = require('./auth')
 
 module.exports = class RPC {
   constructor (announcedRefs, repositories, drives) {
@@ -98,7 +98,7 @@ module.exports = class RPC {
     })
   }
 
-  async parseReq(publicKey, req, access, branch = '*') {
+  async parseReq(publicKey, req) {
     if (!req) throw new Error('Request is empty')
     let request = JSON.parse(req.toString())
     const parsed = {
@@ -116,22 +116,12 @@ module.exports = class RPC {
     if (process.env.GIT_PEAR_AUTH === 'naitive') {
       userId = publicKey
     } else {
-      userId = (await acl.getId({ ...request.body, payload: request.header })).userId
+      userId = (await auth.getId({ ...request.body, payload: request.header })).userId
     }
     const aclObj = home.getACL(parsed.repoName)
     const userACL = aclObj[userId] || aclObj['*']
     if (!userACL) throw new Error('You are not allowed to access this repo')
 
-    if (aclObj.protectecBranches.includes(branch)) {
-      // protected branch must have exaplicit access grant
-      if (access === 'w') {
-
-      } else {
-        // 
-      }
-    } else {
-      
-    }
 
     return parsed
   }
