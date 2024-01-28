@@ -2,6 +2,7 @@ const ProtomuxRPC = require('protomux-rpc')
 const { spawn } = require('child_process')
 const home = require('./home')
 const auth = require('./auth')
+const acl = require('./acl')
 
 module.exports = class RPC {
   constructor (announcedRefs, repositories, drives) {
@@ -32,26 +33,47 @@ module.exports = class RPC {
   }
 
   async getReposHandler (publicKey, req) {
-    const { branch, url } = await this.parseReq(publicKey, req, 'r')
+    const { branch, url, userId } = await this.parseReq(publicKey, req)
 
     const res = {}
     for (const repoName in this.repositories) {
       // TODO: add only public repos and those which are shared with the peer
       // Alternatively return only requested repo
-      res[repoName] = this.drives[repoName].key.toString('hex')
+      const isPublic = (acl.getACL(repoName).visibility === 'public')
+      if (isPublic || acl.getViewers(repoName).includes(userId)) {
+        res[repoName] = this.drives[repoName].key.toString('hex')
+      }
     }
     return Buffer.from(JSON.stringify(res))
   }
 
   async getRefsHandler (publicKey, req) {
-    const { repoName, branch, url } = await this.parseReq(publicKey, req, 'r')
+    const { repoName, branch, url, userId } = await this.parseReq(publicKey, req)
     const res = this.repositories[repoName]
 
-    return Buffer.from(JSON.stringify(res))
+    const isPublic = (acl.getACL(repoName).visibility === 'public')
+    if (isPublic || acl.getViewers(repoName).includes(userId)) {
+      return Buffer.from(JSON.stringify(res))
+    } else {
+      throw new Error('You are not allowed to access this repo')
+    }
   }
 
   async pushHandler (publicKey, req) {
-    const { url, repoName, branch } = await this.parseReq(publicKey, req, 'w')
+    const { url, repoName, branch, userId } = await this.parseReq(publicKey, req)
+    const isContributor = acl.getContributors(repoName).includes(userId)
+
+    if (!isContributor) {
+      throw new Error('You are not allowed to push to this repo')
+    }
+
+    const isProtectedBranch = acl.getACL(repoName).protectedBranches.includes(branch)
+    const isAdmin = acl.getAdmins(repoName).includes(userId)
+
+    if (isProtectedBranch && !isAdmin) {
+      throw new Error('You are not allowed to push to this branch')
+    }
+
     return await new Promise((resolve, reject) => {
       const env = { ...process.env, GIT_DIR: home.getCodePath(repoName) }
       const child = spawn('git', ['fetch', url, `${branch}:${branch}`], { env })
@@ -67,7 +89,20 @@ module.exports = class RPC {
   }
 
   async forcePushHandler (publicKey, req) {
-    const { url, repoName, branch } = await this.parseReq(publicKey, req, 'w')
+    const { url, repoName, branch, userId } = await this.parseReq(publicKey, req)
+    const isContributor = acl.getContributors(repoName).includes(userId)
+
+    if (!isContributor) {
+      throw new Error('You are not allowed to push to this repo')
+    }
+
+    const isProtectedBranch = acl.getACL(repoName).protectedBranches.includes(branch)
+    const isAdmin = acl.getAdmins(repoName).includes(userId)
+
+    if (isProtectedBranch && !isAdmin) {
+      throw new Error('You are not allowed to push to this branch')
+    }
+
     return await new Promise((resolve, reject) => {
       const env = { ...process.env, GIT_DIR: home.getCodePath(repoName) }
       const child = spawn('git', ['fetch', url, `${branch}:${branch}`, '--force'], { env })
@@ -83,7 +118,19 @@ module.exports = class RPC {
   }
 
   async deleteBranchHandler (publicKey, req) {
-    const { url, repoName, branch } = await this.parseReq(publicKey, req, 'w')
+    const { url, repoName, branch, userId } = await this.parseReq(publicKey, req)
+    const isContributor = acl.getContributors(repoName).includes(userId)
+
+    if (!isContributor) {
+      throw new Error('You are not allowed to push to this repo')
+    }
+
+    const isProtectedBranch = acl.getACL(repoName).protectedBranches.includes(branch)
+    const isAdmin = acl.getAdmins(repoName).includes(userId)
+
+    if (isProtectedBranch && !isAdmin) {
+      throw new Error('You are not allowed to push to this branch')
+    }
     return await new Promise((resolve, reject) => {
       const env = { ...process.env, GIT_DIR: home.getCodePath(repoName) }
       const child = spawn('git', ['branch', '-D', branch], { env })
@@ -104,25 +151,19 @@ module.exports = class RPC {
     const parsed = {
       repoName: request.body.url?.split('/')?.pop(),
       branch: request.body.data?.split('#')[0],
-      url: request.body.url
+      url: request.body.url,
+      userId: await this.authenticate(publicKey, request),
     }
-    if (!process.env.GIT_PEAR_AUTH) return parsed
+    return parsed
+  }
 
+  async authenticate (publicKey, req) {
+    if (!process.env.GIT_PEAR_AUTH) return publicKey
+    if (process.env.GIT_PEAR_AUTH === 'naitive') return publicKey
     if (process.env.GIT_PEAR_AUTH !== 'naitive' && !request.header) {
       throw new Error('You are not allowed to access this repo')
     }
 
-    let userId
-    if (process.env.GIT_PEAR_AUTH === 'naitive') {
-      userId = publicKey
-    } else {
-      userId = (await auth.getId({ ...request.body, payload: request.header })).userId
-    }
-    const aclObj = home.getACL(parsed.repoName)
-    const userACL = aclObj[userId] || aclObj['*']
-    if (!userACL) throw new Error('You are not allowed to access this repo')
-
-
-    return parsed
+    return (await auth.getId({ ...request.body, payload: request.header })).userId
   }
 }

@@ -14,6 +14,10 @@ function shareAppFolder (name) {
   fs.openSync(`${APP_HOME}/${name}/.git-daemon-export-ok`, 'w')
 }
 
+function getACLFilePath (name) {
+  if (!fs.existsSync(`${APP_HOME}/${name}/.git-daemon-export-ok`)) throw new Error('Repo is not shared')
+  return `${APP_HOME}/${name}/.git-daemon-export-ok`
+}
 
 function unshareAppFolder (name) {
   fs.unlinkSync(`${APP_HOME}/${name}/.git-daemon-export-ok`)
@@ -25,10 +29,6 @@ function isInitialized (name) {
 
 function isShared (name) {
   return fs.existsSync(`${APP_HOME}/${name}/.git-daemon-export-ok`)
-}
-
-function getACL (name) {
-  if (!fs.existsSync(`${APP_HOME}/${name}/.git-daemon-export-ok`)) throw new Error('Repo is not shared')
 }
 
 function list (sharedOnly) {
@@ -125,5 +125,5 @@ module.exports = {
   getDaemonPid,
   isDaemonRunning,
   removeDaemonPid,
-  getACL,
+  getACLFilePath
 }
