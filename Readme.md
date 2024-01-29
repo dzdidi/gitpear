@@ -46,7 +46,7 @@ All data will be persisted in application directory (default `~/.gitpear`). To c
 ### ACL (for authenticated access to enable support of PUSH)
 
 Support of `push` capabilities only enabled for authenticated users. Currently supported authentication is based on [NIP98](https://github.com/nostr-protocol/nips/blob/master/98.md).
-To start daemon with authenticated support provile environment varibales `GIT_PEAR_AUTH` with value `nip98` and `GIT_PEAR_AUTH_NSEC` with value of your [NIP19 nsec](https://github.com/nostr-protocol/nips/blob/master/19.md).
+To start daemon with authenticated support provide environment varibales `GIT_PEAR_AUTH` with value `nip98` and `GIT_PEAR_AUTH_NSEC` with value of your [NIP19 nsec](https://github.com/nostr-protocol/nips/blob/master/19.md).
 For example:
 ```
 GIT_PEAR_AUTH=nip98 GIT_PEAR_AUTH_NSEC=nsec.... git pear daemon -s 
@@ -73,7 +73,7 @@ It is possible to setup basic branch protection rules (master is proteted by def
 
 ## Un authenticated usage example (no push)
 
-Collaboration is possible with the following flow between Alice and Bob in a pure peer-to-peer manner of git.
+Collaboration is possible with the following flow between Alice and Bob in a peer-to-peer manner.
 
 1. Both Alice and Bob have gitpear installed and Alice wants Bob to help her with repo Repo
 2. Alice steps are:
@@ -118,7 +118,7 @@ git pull
 
 ## Authenticated usage example (push) - at your own risk
 
-Collaboration is possible with the following flow between Carol and David in a pure peer-to-peer manner of git.
+Collaboration is possible with the following flow between Carol and David in a peer-to-peer manner.
 
 ### Carol steps (as a server of code)
 1. Start daemon
