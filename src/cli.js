@@ -38,17 +38,23 @@ program
       process.exit(1)
     }
 
-    home.createAppFolder(name)
-    console.log(`Added project "${name}" to gitpear`)
-    await git.createBareRepo(name)
-    console.log(`Created bare repo for "${name}"`)
-    await git.addRemote(name)
-    console.log(`Added git remote for "${name}" as "pear"`)
+    try {
+      home.createAppFolder(name) 
+      console.log(`Added project "${name}" to gitpear`)
+    } catch (e) { }
+    try {
+      await git.createBareRepo(name)
+      console.log(`Created bare repo for "${name}"`)
+    } catch (e) { }
+    try {
+      await git.addRemote(name)
+      console.log(`Added git remote for "${name}" as "pear"`)
+    } catch (e) { }
 
     if (options.share) {
-      home.shareAppFolder(name)
-      acl.setACL(name)
-      await git.push()
+      try { home.shareAppFolder(name) } catch (e) { }
+      try { acl.setACL(name) } catch (e) { }
+      try { await git.push() } catch (e) { }
       console.log(`Shared "${name}" project`)
     }
   })
@@ -71,12 +77,54 @@ program
       process.exit(1)
     }
 
-    home.shareAppFolder(name)
-    acl.setACL(name, { visibility: v })
-    await git.push()
+    try { home.shareAppFolder(name) } catch (e) { }
+    try { acl.setACL(name, { visibility: v }) } catch (e) { }
+    try { await git.push() } catch (e) { }
     console.log(`Shared "${name}" project, as ${v} repo`)
     return
   })
+
+program
+  .command('branch')
+  .description('branch protection rules')
+  .addArgument(new commander.Argument('[a]', 'actiont to perform').choices(['add', 'remove', 'list']).default('list'))
+  .addArgument(new commander.Argument('[b]', 'branch name').default(''))
+  .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
+  .action(async (a, b, p, options) => {
+    const fullPath = path.resolve(p)
+    if (!fs.existsSync(path.join(fullPath, '.git'))) {
+      console.error('Not a git repo')
+      process.exit(1)
+    }
+
+    const name = fullPath.split(path.sep).pop()
+    if (!home.isInitialized(name)) {
+      console.error(`${name} is not initialized`)
+      process.exit(1)
+    }
+
+    if (a === 'list' && !b) { logBranches(name) }
+
+    if (a === 'add') {
+      acl.addProtectedBranch(name, b)
+      logBranches(name)
+    }
+
+    if (a === 'remove') {
+      acl.removeProtectedBranch(name, b)
+      logBranches(name)
+    }
+
+    function logBranches(name) {
+      const repoACL = acl.getACL(name)
+      console.log('Visibility:', '\t', repoACL.visibility)
+      console.log('Branch:')
+      for (const branch of repoACL.protectedBranches) { console.log(branch) }
+    }
+ 
+    return
+  })
+
 
 program
   .command('acl')
@@ -85,6 +133,8 @@ program
   .addArgument(new commander.Argument('[u]', 'user to add/remove/list').default(''))
   .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
   .action(async (a, u, p, options) => {
+
+    // TODO: add branch protection logic
     const fullPath = path.resolve(p)
     if (!fs.existsSync(path.join(fullPath, '.git'))) {
       console.error('Not a git repo')
@@ -99,7 +149,7 @@ program
     const repoACL = acl.getACL(name)
 
     if (a === 'list' && !u) {
-      console.log('Visibility:', '\t', repoACL.visibility)
+      console.log('Repo Visibility:', '\t', repoACL.visibility)
       console.log('User:', '\t', 'Role:')
       for (const user in repoACL.ACL) {
         console.log(user, '\t', repoACL.ACL[user])
@@ -108,8 +158,8 @@ program
     }
 
     if (a === 'list') {
-      console.log('Visibility:', '\t', repoACL.visibility)
-      console.log('User:', u, '\t', 'Role:', repoACL.ACL[u])
+      console.log('Repo Visibility:', '\t', repoACL.visibility)
+      console.log('User:', u, '\t', repoACL.ACL[u])
       return
     }
 
