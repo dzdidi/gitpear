@@ -116,7 +116,7 @@ git fetch origin
 git pull
 ```
 
-## Authenticated usage example (push)
+## Authenticated usage example (push) - at your own risk
 
 Collaboration is possible with the following flow between Carol and David in a pure peer-to-peer manner of git.
 
@@ -142,7 +142,7 @@ Collaboration is possible with the following flow between Carol and David in a p
 * `GIT_PEAR_AUTH_NSEC=<David's nsec> GIT_PEAR_AUTH='nip98' git clone pear://<Carol's url>/<repo name>`
 3. Do the necessary change in separate branch 
 * `git checkout -b feat/david`
-* // do change
+* do change
 * `git add .`
 * `git commit -s -m 'made by David'`
 4. Push branch to origin
