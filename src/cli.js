@@ -9,6 +9,7 @@ const path = require('path')
 const fs = require('fs')
 
 const home = require('./home')
+const acl = require('./acl')
 const git = require('./git')
 
 const pkg = require('../package.json')
@@ -32,19 +33,28 @@ program
     const name = fullPath.split(path.sep).pop()
     if ((home.isInitialized(name))) {
       console.error(`${name} is already initialized`)
+      await git.addRemote(name)
+      console.log(`Added git remote for "${name}" as "pear"`)
       process.exit(1)
     }
 
-    home.createAppFolder(name)
-    console.log(`Added project "${name}" to gitpear`)
-    await git.createBareRepo(name)
-    console.log(`Created bare repo for "${name}"`)
-    await git.addRemote(name)
-    console.log(`Added git remote for "${name}" as "pear"`)
+    try {
+      home.createAppFolder(name) 
+      console.log(`Added project "${name}" to gitpear`)
+    } catch (e) { }
+    try {
+      await git.createBareRepo(name)
+      console.log(`Created bare repo for "${name}"`)
+    } catch (e) { }
+    try {
+      await git.addRemote(name)
+      console.log(`Added git remote for "${name}" as "pear"`)
+    } catch (e) { }
 
     if (options.share) {
-      home.shareAppFolder(name)
-      await git.push()
+      try { home.shareAppFolder(name) } catch (e) { }
+      try { acl.setACL(name) } catch (e) { }
+      try { await git.push() } catch (e) { }
       console.log(`Shared "${name}" project`)
     }
   })
@@ -53,25 +63,153 @@ program
   .command('share')
   .description('share a gitpear repo')
   .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
-  .action(async (p, options) => {
-    const name = path.resolve(p).split(path.sep).pop()
-    if ((home.isInitialized(name))) {
-      home.shareAppFolder(name)
-      await git.push()
-      console.log(`Shared "${name}" project`)
+  .addArgument(new commander.Argument('[v]', 'visibility of the repo').default('public'))
+  .action(async (p, v, options) => {
+    const fullPath = path.resolve(p)
+    if (!fs.existsSync(path.join(fullPath, '.git'))) {
+      console.error('Not a git repo')
+      process.exit(1)
+    }
+
+    const name = fullPath.split(path.sep).pop()
+    if (!home.isInitialized(name)) {
+      console.error(`${name} is not initialized`)
+      process.exit(1)
+    }
+
+    try { home.shareAppFolder(name) } catch (e) { }
+    try { acl.setACL(name, { visibility: v }) } catch (e) { }
+    try { await git.push() } catch (e) { }
+    console.log(`Shared "${name}" project, as ${v} repo`)
+    return
+  })
+
+program
+  .command('branch')
+  .description('branch protection rules')
+  .addArgument(new commander.Argument('[a]', 'actiont to perform').choices(['add', 'remove', 'list']).default('list'))
+  .addArgument(new commander.Argument('[b]', 'branch name').default(''))
+  .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
+  .action(async (a, b, p, options) => {
+    const fullPath = path.resolve(p)
+    if (!fs.existsSync(path.join(fullPath, '.git'))) {
+      console.error('Not a git repo')
+      process.exit(1)
+    }
+
+    const name = fullPath.split(path.sep).pop()
+    if (!home.isInitialized(name)) {
+      console.error(`${name} is not initialized`)
+      process.exit(1)
+    }
+
+    if (a === 'list' && !b) { logBranches(name) }
+
+    if (a === 'add') {
+      acl.addProtectedBranch(name, b)
+      logBranches(name)
+    }
+
+    if (a === 'remove') {
+      acl.removeProtectedBranch(name, b)
+      logBranches(name)
+    }
+
+    function logBranches(name) {
+      const repoACL = acl.getACL(name)
+      console.log('Visibility:', '\t', repoACL.visibility)
+      console.log('Branch:')
+      for (const branch of repoACL.protectedBranches) { console.log(branch) }
+    }
+ 
+    return
+  })
+
+
+program
+  .command('acl')
+  .description('set acl of a gitpear repo')
+  .addArgument(new commander.Argument('[a]', 'actiont to perform').choices(['add', 'remove', 'list']).default('list'))
+  .addArgument(new commander.Argument('[u]', 'user to add/remove/list').default(''))
+  .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
+  .action(async (a, u, p, options) => {
+
+    // TODO: add branch protection logic
+    const fullPath = path.resolve(p)
+    if (!fs.existsSync(path.join(fullPath, '.git'))) {
+      console.error('Not a git repo')
+      process.exit(1)
+    }
+
+    const name = fullPath.split(path.sep).pop()
+    if (!home.isInitialized(name)) {
+      console.error(`${name} is not initialized`)
+      process.exit(1)
+    }
+    const repoACL = acl.getACL(name)
+
+    if (a === 'list' && !u) {
+      console.log('Repo Visibility:', '\t', repoACL.visibility)
+      console.log('User:', '\t', 'Role:')
+      for (const user in repoACL.ACL) {
+        console.log(user, '\t', repoACL.ACL[user])
+      }
       return
     }
 
-    console.error(`${name} is not initialized`)
-    process.exit(1)
+    if (a === 'list') {
+      console.log('Repo Visibility:', '\t', repoACL.visibility)
+      console.log('User:', u, '\t', repoACL.ACL[u])
+      return
+    }
+
+    if (a === 'add') {
+      if (!u) {
+        console.error('User not provided')
+        process.exit(1)
+      }
+
+      const [ userId, role ] = u.split(':')
+      if (repoACL.ACL[userId]) {
+        console.error(`${userId} already has access to ${name} as ${repoACL.ACL[userId]}`)
+        process.exit(1)
+      }
+
+      acl.grantAccessToUser(name, userId, role)
+      console.log(`Added ${userId} to ${name} as ${role}`)
+      return
+    }
+
+    if (a === 'remove') {
+      if (!u) {
+        console.error('User not provided')
+        process.exit(1)
+      }
+
+      if (!repoACL.ACL[u]) {
+        console.error(`${u} does not have access to ${name}`)
+        process.exit(1)
+      }
+
+      acl.revokeAccessFromUser(name, u)
+      console.log(`Removed ${u} from ${name}`)
+      return
+    }
   })
+  
 
 program
   .command('unshare')
   .description('unshare a gitpear repo')
   .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
   .action((p, options) => {
-    const name = path.resolve(p).split(path.sep).pop()
+    const fullPath = path.resolve(p)
+    if (!fs.existsSync(path.join(fullPath, '.git'))) {
+      console.error('Not a git repo')
+      process.exit(1)
+    }
+
+    const name = fullPath.split(path.sep).pop()
     if ((home.isInitialized(name))) {
       home.unshareAppFolder(name)
       console.log(`Unshared "${name}" project`)

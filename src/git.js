@@ -1,6 +1,25 @@
 const { getCodePath } = require('./home')
 const { spawn } = require('child_process')
 
+async function getCommit () {
+  return await new Promise((resolve, reject) => {
+    const process = spawn('git', ['rev-parse', 'HEAD'])
+    let outBuffer = Buffer.from('')
+    process.stdout.on('data', data => {
+      outBuffer = Buffer.concat([outBuffer, data])
+    })
+
+    let errBuffer = Buffer.from('')
+    process.stderr.on('err', data => {
+      errBuffer = Buffer.concat([errBuffer, data])
+    })
+
+    process.on('close', code => {
+      return code === 0 ? resolve(outBuffer.toString().replace('\n', '')) : reject(errBuffer)
+    })
+  })
+}
+
 async function lsPromise (url) {
   const ls = spawn('git', ['ls-remote', url])
   const res = {}
@@ -31,8 +50,10 @@ async function addRemote (name) {
   return await doGit(init)
 }
 
-async function push (branch = 'master') {
-  const push = spawn('git', ['push', 'pear', branch])
+async function push (branch = 'master', force = false) {
+  const args = ['push', 'pear', branch]
+  if (force) args.push('-f')
+  const push = spawn('git', args)
   return await doGit(push)
 }
 
@@ -180,4 +201,4 @@ async function unpackStream (packStream) {
   })
 }
 
-module.exports = { lsPromise, uploadPack, unpackFile, unpackStream, createBareRepo, addRemote, push }
+module.exports = { lsPromise, uploadPack, unpackFile, unpackStream, createBareRepo, addRemote, push, getCommit }

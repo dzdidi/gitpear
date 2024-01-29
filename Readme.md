@@ -32,27 +32,48 @@ npm nix
 
 See `./result` - for binaries build by nix. To make the available add to path by running `PATH="${PATH:+${PATH}:}${PWD}/result/bin/"`
 
-##
+## Running
 
 All data will be persisted in application directory (default `~/.gitpear`). To change it. Provide environment variable `GIT_PEAR`
 
 * `git pear daemon <-s, --start | -k, --stop>` - start or stop daemon
-
 * `git pear key` - print out public key. Share it with your peers so that they can do `git pull pear:<public key>/<repo name>`
-
 * `git pear init [-s, --share] <path>` - It will create [bare repository](https://git-scm.com/docs/git-init#Documentation/git-init.txt---bare) of the same name in application directory (default ~/.gitpear/<repository name>). It will add [git remote](https://git-scm.com/docs/git-remote) in current repository with name `pear`. So just like in traditional flow doing `git push orign`, here we do `git push pear`. By default repository will not be shared. To enable sharing provide `-s` or call `gitpear share <path>` later
-
 * `git pear share <path>` - makes repository sharable
-
 * `git pear unshare <path>` -  stop sharing repository
-
 * `git pear list [-s, --shared]` - list all or (only shared) repositories
 
-## Usage example
+### ACL (for authenticated access to enable support of PUSH)
 
-Please not this is only remote helper and its intention is only to enable direct `clone|fetch|pull` of repository hosted on private computer.
+Support of `push` capabilities only enabled for authenticated users. Currently supported authentication is based on [NIP98](https://github.com/nostr-protocol/nips/blob/master/98.md).
+To start daemon with authenticated support provide environment varibales `GIT_PEAR_AUTH` with value `nip98` and `GIT_PEAR_AUTH_NSEC` with value of your [NIP19 nsec](https://github.com/nostr-protocol/nips/blob/master/19.md).
+For example:
+```
+GIT_PEAR_AUTH=nip98 GIT_PEAR_AUTH_NSEC=nsec.... git pear daemon -s 
+```
 
-Collaboration is possible however with the following flow between Alice and Bob in a pure peer-to-peer manner of git.
+To manage access to repository use one or combination of the following commands, if `path` is not provide the command will be executed in the current directory. For `userId` use [NIP19 npub](https://github.com/nostr-protocol/nips/blob/master/19.md).
+
+* `git pear acl [command] <path>` - ACL managegement
+* `git pear acl list [userId] <path>` - list repository visitbility and user's role (or roles of all users if userId is not provided)
+* `git pear acl add <userId:role> <path>` - add user as a "role" to repository, available roles are `viewer`, `contributor`, `admin`. Roles exaplained:
+  * `viewer` - can read all branches;
+  * `contributor` - can edit all branches except protected (default master) 
+  * `admin` - can edit protected branches
+* `git pear acl remove <userId> <path>` - revoke use access to repository
+
+
+### Branch protection rules
+It is possible to setup basic branch protection rules (master is proteted by default).
+* `git pear branch`, same as `git pear branch list .` - list protection rules
+* `git pear branch add <branch name> <repo path>` - mark branch as protected (defatul repo path is ".")
+* `git pear branch remove <branch name> <repo path>` - unmark branch as protected
+
+# Examples of usage
+
+## Un authenticated usage example (no push)
+
+Collaboration is possible with the following flow between Alice and Bob in a peer-to-peer manner.
 
 1. Both Alice and Bob have gitpear installed and Alice wants Bob to help her with repo Repo
 2. Alice steps are:
@@ -94,3 +115,41 @@ git checkout master
 git fetch origin
 git pull
 ```
+
+## Authenticated usage example (push) - at your own risk
+
+Collaboration is possible with the following flow between Carol and David in a peer-to-peer manner.
+
+### Carol steps (as a server of code)
+1. Start daemon
+* `GIT_PEAR_AUTH_NSEC=<Carol's nsec> GIT_PEAR_AUTH='nip98' git pear daemon -s`
+2. Go to repository
+* `cd repo`
+3. Initialize git pear repository
+* `git pear init .`
+4. Share repository wit hviben visibility () - (default is `public`)
+* `git pear share . <private|public>`
+5. Add Daviv as a `contirbutor`.
+6. List David's npub as a contributor
+* `git pear acl add <David npub>:contributor`
+7. Retreive repo url and share it with Dave
+* `git pear list -s`
+
+### Dave side (a collaborator for code)
+1. Start daemon. This will be needed later for push. Not that no auth or sec are provided which means that push to this place will not be supportedd.
+* `git pear daemon -s`
+2. Clone repository. Authorization data and type are necesary for server (Carol) to grant corresponding access persmissions
+* `GIT_PEAR_AUTH_NSEC=<David's nsec> GIT_PEAR_AUTH='nip98' git clone pear://<Carol's url>/<repo name>`
+3. Do the necessary change in separate branch 
+* `git checkout -b feat/david`
+* do change
+* `git add .`
+* `git commit -s -m 'made by David'`
+4. Push branch to origin
+* `GIT_PEAR_AUTH_NSEC=<David's nsec> GIT_PEAR_AUTH='nip98' git push origin feat/david`
+
+### Carol steps
+1. For Carol the changes will arrive as branch `feat/david` into her `pear`
+* `git fetch pear`
+2. From there she can do
+* `git diff pear/feat/david` or `git pull pear feat/david` ... merge to master and push to `pear`
