@@ -65,18 +65,12 @@ module.exports = class RPC {
     const { url, repoName, branch, userId } = await this.parseReq(publicKey, req)
     const isContributor = acl.getContributors(repoName).includes(userId)
 
-    console.error('pushHandler', { url, repoName, branch, userId, isContributor })
-
-    if (!isContributor) {
-      throw new Error('You are not allowed to push to this repo')
-    }
+    if (!isContributor) throw new Error('You are not allowed to push to this repo')
 
     const isProtectedBranch = acl.getACL(repoName).protectedBranches.includes(branch)
     const isAdmin = acl.getAdmins(repoName).includes(userId)
 
-    if (isProtectedBranch && !isAdmin) {
-      throw new Error('You are not allowed to push to this branch')
-    }
+    if (isProtectedBranch && !isAdmin) throw new Error('You are not allowed to push to this branch')
 
     return await new Promise((resolve, reject) => {
       const env = { ...process.env, GIT_DIR: home.getCodePath(repoName) }
@@ -96,16 +90,12 @@ module.exports = class RPC {
     const { url, repoName, branch, userId } = await this.parseReq(publicKey, req)
     const isContributor = acl.getContributors(repoName).includes(userId)
 
-    if (!isContributor) {
-      throw new Error('You are not allowed to push to this repo')
-    }
+    if (!isContributor) throw new Error('You are not allowed to push to this repo')
 
     const isProtectedBranch = acl.getACL(repoName).protectedBranches.includes(branch)
     const isAdmin = acl.getAdmins(repoName).includes(userId)
 
-    if (isProtectedBranch && !isAdmin) {
-      throw new Error('You are not allowed to push to this branch')
-    }
+    if (isProtectedBranch && !isAdmin) throw new Error('You are not allowed to push to this branch')
 
     return await new Promise((resolve, reject) => {
       const env = { ...process.env, GIT_DIR: home.getCodePath(repoName) }
@@ -125,16 +115,13 @@ module.exports = class RPC {
     const { url, repoName, branch, userId } = await this.parseReq(publicKey, req)
     const isContributor = acl.getContributors(repoName).includes(userId)
 
-    if (!isContributor) {
-      throw new Error('You are not allowed to push to this repo')
-    }
+    if (!isContributor) throw new Error('You are not allowed to push to this repo')
 
     const isProtectedBranch = acl.getACL(repoName).protectedBranches.includes(branch)
     const isAdmin = acl.getAdmins(repoName).includes(userId)
 
-    if (isProtectedBranch && !isAdmin) {
-      throw new Error('You are not allowed to push to this branch')
-    }
+    if (isProtectedBranch && !isAdmin) throw new Error('You are not allowed to push to this branch')
+
     return await new Promise((resolve, reject) => {
       const env = { ...process.env, GIT_DIR: home.getCodePath(repoName) }
       const child = spawn('git', ['branch', '-D', branch], { env })
