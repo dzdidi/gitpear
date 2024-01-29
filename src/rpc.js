@@ -24,10 +24,12 @@ module.exports = class RPC {
     rpc.respond('get-repos', async req => await this.getReposHandler(peerInfo.publicKey, req))
     rpc.respond('get-refs',  async req => await this.getRefsHandler(peerInfo.publicKey, req))
 
-    /* -- PUSH HANDLERS -- */
-    rpc.respond('push',     async req => await this.pushHandler(peerInfo.publicKey, req))
-    rpc.respond('f-push',   async req => await this.forcePushHandler(peerInfo.publicKey, req))
-    rpc.respond('d-branch', async req => await this.deleteBranchHandler(peerInfo.publicKey, req))
+    if (process.env.GIT_PEAR_AUTH) {
+      /* -- PUSH HANDLERS -- */
+      rpc.respond('push',     async req => await this.pushHandler(peerInfo.publicKey, req))
+      rpc.respond('f-push',   async req => await this.forcePushHandler(peerInfo.publicKey, req))
+      rpc.respond('d-branch', async req => await this.deleteBranchHandler(peerInfo.publicKey, req))
+    }
 
     this.connections[peerInfo.publicKey] = rpc
   }
@@ -62,6 +64,8 @@ module.exports = class RPC {
   async pushHandler (publicKey, req) {
     const { url, repoName, branch, userId } = await this.parseReq(publicKey, req)
     const isContributor = acl.getContributors(repoName).includes(userId)
+
+    console.error('pushHandler', { url, repoName, branch, userId, isContributor })
 
     if (!isContributor) {
       throw new Error('You are not allowed to push to this repo')
