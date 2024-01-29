@@ -61,6 +61,7 @@ function revokeAccessFromUser (repoName, user) {
 
 function addProtectedBranch (repoName, branch) {
   const acl = getACL(repoName)
+  if (acl.protectedBranches.includes(branch)) throw new Error(`${branch} is already protected`)
   acl.protectedBranches.push(branch)
   setACL(repoName, acl)
 }
