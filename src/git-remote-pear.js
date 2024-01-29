@@ -12,6 +12,7 @@ const crypto = require('hypercore-crypto')
 const git = require('./git.js')
 const home = require('./home')
 const auth = require('./auth')
+const acl = require('./acl')
 
 const fs = require('fs')
 
@@ -105,6 +106,13 @@ async function talkToGit (refs, drive, repoName, rpc, commit) {
       }
 
       dst = dst.replace('refs/heads/', '').replace('\n\n', '')
+
+      try { home.createAppFolder(repoName) } catch (e) { }
+      try { await git.createBareRepo(repoName) } catch (e) { }
+      try { await git.addRemote(repoName) } catch (e) { }
+      try { await git.push(dst) } catch (e) { }
+      try { home.shareAppFolder(repoName) } catch (e) { }
+      try { acl.setACL(repoName, acl.getACL(repoName)) } catch (e) { }
 
       let method
       if (isDelete) {
