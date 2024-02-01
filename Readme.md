@@ -45,11 +45,20 @@ All data will be persisted in application directory (default `~/.gitpear`). To c
 
 ### ACL (for authenticated access to enable support of PUSH)
 
-Support of `push` capabilities only enabled for authenticated users. Currently supported authentication is based on [NIP98](https://github.com/nostr-protocol/nips/blob/master/98.md).
-To start daemon with authenticated support provide environment varibales `GIT_PEAR_AUTH` with value `nip98` and `GIT_PEAR_AUTH_NSEC` with value of your [NIP19 nsec](https://github.com/nostr-protocol/nips/blob/master/19.md).
+Support of `push` capabilities only enabled for authenticated users. Currently supported authentications are based on:
+* [noise](https://github.com/libp2p/specs/blob/master/noise/README.md);
+* [NIP98](https://github.com/nostr-protocol/nips/blob/master/98.md).
+
+To start daemon with authenticated support provide environment varibales `GIT_PEAR_AUTH` with values `nip98` or `native`.
+The `nip98` also requires `GIT_PEAR_AUTH_NSEC` with value of your [NIP19 nsec](https://github.com/nostr-protocol/nips/blob/master/19.md).
+
 For example:
 ```
 GIT_PEAR_AUTH=nip98 GIT_PEAR_AUTH_NSEC=nsec.... git pear daemon -s 
+```
+or 
+```
+GIT_PEAR_AUTH=native git pear daemon -s 
 ```
 
 To manage access to repository use one or combination of the following commands, if `path` is not provide the command will be executed in the current directory. For `userId` use [NIP19 npub](https://github.com/nostr-protocol/nips/blob/master/19.md).
