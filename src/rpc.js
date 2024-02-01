@@ -1,4 +1,5 @@
 const ProtomuxRPC = require('protomux-rpc')
+const SecretStream = require('@hyperswarm/secret-stream')
 const { spawn } = require('child_process')
 const home = require('./home')
 const auth = require('./auth')
@@ -21,14 +22,14 @@ module.exports = class RPC {
     // which can in turn be stored in a .git-daemon-export-ok file
 
     /* -- PULL HANDLERS -- */
-    rpc.respond('get-repos', async req => await this.getReposHandler(peerInfo.publicKey, req))
-    rpc.respond('get-refs',  async req => await this.getRefsHandler(peerInfo.publicKey, req))
+    rpc.respond('get-repos', async req => await this.getReposHandler(socket.remotePublicKey, req))
+    rpc.respond('get-refs',  async req => await this.getRefsHandler(socket.remotePublicKey, req))
 
     if (process.env.GIT_PEAR_AUTH) {
       /* -- PUSH HANDLERS -- */
-      rpc.respond('push',     async req => await this.pushHandler(peerInfo.publicKey, req))
-      rpc.respond('f-push',   async req => await this.forcePushHandler(peerInfo.publicKey, req))
-      rpc.respond('d-branch', async req => await this.deleteBranchHandler(peerInfo.publicKey, req))
+      rpc.respond('push',     async req => await this.pushHandler(socket.remotePublicKey, req))
+      rpc.respond('f-push',   async req => await this.forcePushHandler(socket.remotePublicKey, req))
+      rpc.respond('d-branch', async req => await this.deleteBranchHandler(socket.remotePublicKey, req))
     }
 
     this.connections[peerInfo.publicKey] = rpc
@@ -145,11 +146,13 @@ module.exports = class RPC {
       url: request.body.url,
       userId: await this.authenticate(publicKey, request),
     }
+    console.error('parsed', parsed)
     return parsed
   }
 
   async authenticate (publicKey, request) {
     if (!process.env.GIT_PEAR_AUTH) return publicKey.toString('hex')
+    if (process.env.GIT_PEAR_AUTH === 'native') return publicKey.toString('hex')
     if (!request.header) throw new Error('You are not allowed to access this repo')
 
     return (await auth.getId({ ...request.body, payload: request.header })).userId

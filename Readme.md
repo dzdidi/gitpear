@@ -120,18 +120,20 @@ git pull
 
 Collaboration is possible with the following flow between Carol and David in a peer-to-peer manner.
 
+Supported authentication methods are `native` and `nip98`. The `nip98` authentication, requires environment variable `GIT_PEAR_AUTH_NSEC` with nsec
+
 ### Carol steps (as a server of code)
 1. Start daemon
-* `GIT_PEAR_AUTH_NSEC=<Carol's nsec> GIT_PEAR_AUTH='nip98' git pear daemon -s`
+* `GIT_PEAR_AUTH='native' git pear daemon -s`
 2. Go to repository
 * `cd repo`
 3. Initialize git pear repository
 * `git pear init .`
 4. Share repository wit hviben visibility () - (default is `public`)
-* `git pear share . <private|public>`
+* `git pear share . public`
 5. Add Daviv as a `contirbutor`.
 6. List David's npub as a contributor
-* `git pear acl add <David npub>:contributor`
+* `git pear acl add <David pub key hex>:contributor`
 7. Retreive repo url and share it with Dave
 * `git pear list -s`
 
@@ -139,14 +141,14 @@ Collaboration is possible with the following flow between Carol and David in a p
 1. Start daemon. This will be needed later for push. Not that no auth or sec are provided which means that push to this place will not be supportedd.
 * `git pear daemon -s`
 2. Clone repository. Authorization data and type are necesary for server (Carol) to grant corresponding access persmissions
-* `GIT_PEAR_AUTH_NSEC=<David's nsec> GIT_PEAR_AUTH='nip98' git clone pear://<Carol's url>/<repo name>`
+* `GIT_PEAR_AUTH='native' git clone pear://<Carol's pub key hex>/<repo name>`
 3. Do the necessary change in separate branch 
 * `git checkout -b feat/david`
 * do change
 * `git add .`
 * `git commit -s -m 'made by David'`
 4. Push branch to origin
-* `GIT_PEAR_AUTH_NSEC=<David's nsec> GIT_PEAR_AUTH='nip98' git push origin feat/david`
+* `GIT_PEAR_AUTH='native' git push origin feat/david`
 
 ### Carol steps
 1. For Carol the changes will arrive as branch `feat/david` into her `pear`
