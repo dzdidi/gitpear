@@ -80,7 +80,7 @@ Collaboration is possible with the following flow between Alice and Bob in a pee
 ```
 cd Repo
 git pear init -s
-git pear list
+git pear list -s
 # outputs:
 # Repo    pear://<Alice public key>/Repo
 ```
