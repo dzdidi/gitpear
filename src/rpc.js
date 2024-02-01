@@ -17,6 +17,8 @@ module.exports = class RPC {
     if (this.connections[peerInfo.publicKey]) return this.connections[peerInfo.publicKey]
 
     const rpc = new ProtomuxRPC(socket)
+    rpc.on('error', err => console.error('rpc error', err))
+    rpc.on('close', () => delete this.connections[peerInfo.publicKey])
     // XXX: handshaking can be used for access and permission management
     // for example check of peerInfo.publicKey is in a list of allowed keys
     // which can in turn be stored in a .git-daemon-export-ok file
