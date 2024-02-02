@@ -148,7 +148,6 @@ module.exports = class RPC {
       url: request.body.url,
       userId: await this.authenticate(publicKey, request),
     }
-    console.error('parsed', parsed)
     return parsed
   }
 
