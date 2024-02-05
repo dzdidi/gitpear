@@ -28,7 +28,7 @@ const targetKey = matches[1]
 const repoName = matches[2]
 
 const store = new Corestore(RAM)
-const swarm = new Hyperswarm({ keypair: home.getKeyPair() })
+const swarm = new Hyperswarm({ keyPair: home.getKeyPair() })
 
 if (!home.isDaemonRunning()) {
   console.error('Please start git pear daemon')
@@ -42,7 +42,7 @@ swarm.on('connection', async (socket) => {
   const rpc = new ProtomuxRPC(socket)
 
   let payload = { body: { url, method: 'get-repos' } }
-  if (process.env.GIT_PEAR_AUTH) {
+  if (process.env.GIT_PEAR_AUTH && process.env.GIT_PEAR_AUTH !== 'native') {
     payload.header = await auth.getToken(payload.body)
   }
 
@@ -73,7 +73,7 @@ swarm.on('connection', async (socket) => {
   await drive.core.update({ wait: true })
 
   payload = { body: { url, method: 'get-refs', data: repoName }}
-  if (process.env.GIT_PEAR_AUTH) {
+  if (process.env.GIT_PEAR_AUTH && process.env.GIT_PEAR_AUTH !== 'native') {
     payload.header = await auth.getToken(payload.body)
   }
   const refsRes = await rpc.request('get-refs', Buffer.from(JSON.stringify(payload)))
@@ -100,10 +100,6 @@ async function talkToGit (refs, drive, repoName, rpc, commit) {
 
       const isDelete = !src
       const isForce = src.startsWith('+')
-
-      if (!home.isShared(repoName)) {
-        home.shareAppFolder(name)
-      }
 
       dst = dst.replace('refs/heads/', '').replace('\n\n', '')
 
@@ -134,7 +130,7 @@ async function talkToGit (refs, drive, repoName, rpc, commit) {
         data: `${dst}#${commit}`,
         method
       } }
-      if (process.env.GIT_PEAR_AUTH) {
+      if (process.env.GIT_PEAR_AUTH && process.env.GIT_PEAR_AUTH !== 'native') {
         payload.header = await auth.getToken(payload.body)
       }
       const res = await rpc.request(method, Buffer.from(JSON.stringify(payload)))
