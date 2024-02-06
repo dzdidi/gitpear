@@ -42,6 +42,7 @@ All data will be persisted in application directory (default `~/.gitpear`). To c
 * `git pear share <path>` - makes repository sharable
 * `git pear unshare <path>` -  stop sharing repository
 * `git pear list [-s, --shared]` - list all or (only shared) repositories
+* `git pear list <url>` - list repositories of a peer
 
 ### ACL (for authenticated access to enable support of PUSH)
 
