@@ -224,10 +224,13 @@ program
 program
   .command('list')
   .description('list all gitpear repos')
+  .addArgument(new commander.Argument('[u]', 'url to remote pear').default(''))
   .option('-s, --shared', 'list only shared repos')
-  .action((p, options) => {
+  .action((u, options) => {
+    if (u) return require('./list-remote')(u)
+
     const k = home.readPk()
-    const s = options.opts().shared
+    const s = options.shared
     home.list(s).forEach(n => console.log(n, ...(s ? ['\t', `pear://${k}/${n}`] : [])))
   })
 
