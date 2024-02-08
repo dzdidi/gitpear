@@ -22,7 +22,7 @@ program
   .command('init')
   .description('initialize a gitpear repo')
   .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
-  .option('-s, --share', 'share the repo, default false')
+  .option('-s, --share [branch]', 'share the repo as public, default false, default branch is current', '')
   .action(async (p, options) => {
     const fullPath = path.resolve(p)
     if (!fs.existsSync(path.join(fullPath, '.git'))) {
@@ -51,21 +51,27 @@ program
       console.log(`Added git remote for "${name}" as "pear"`)
     } catch (e) { }
 
+    let branchToShare = await git.getCurrentBranch()
+    if (options.share && options.share !== true) {
+      branchToShare = options.share
+    }
+
     if (options.share) {
       try { home.shareAppFolder(name) } catch (e) { }
       try { acl.setACL(name) } catch (e) { }
-      try { await git.push() } catch (e) { }
-      console.log(`Shared "${name}" project`)
+      try { await git.push(branchToShare) } catch (e) { }
+      console.log(`Shared "${name}" project, ${branchToShare} branch`)
     }
   })
 
 program
   .command('share')
   .description('share a gitpear repo')
-  .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
-  .addArgument(new commander.Argument('[v]', 'visibility of the repo').default('public'))
-  .action(async (p, v, options) => {
-    const fullPath = path.resolve(p)
+  .option('-b, --branch [b]', 'branch to share, default is current branch', '')
+  .option('-v, --visibility [v]', 'visibility of the repo', 'public')
+  .option('-p, --path [p]', 'path to the repo', '.')
+  .action(async (options) => {
+    const fullPath = path.resolve(options.path)
     if (!fs.existsSync(path.join(fullPath, '.git'))) {
       console.error('Not a git repo')
       process.exit(1)
@@ -77,10 +83,12 @@ program
       process.exit(1)
     }
 
+    const currentBranch = await git.getCurrentBranch()
+    const branchToShare = options.branch || currentBranch
     try { home.shareAppFolder(name) } catch (e) { }
-    try { acl.setACL(name, { visibility: v }) } catch (e) { }
-    try { await git.push() } catch (e) { }
-    console.log(`Shared "${name}" project, as ${v} repo`)
+    try { acl.setACL(name, { visibility: options.visibility }) } catch (e) { }
+    try { await git.push(branchToShare) } catch (e) { }
+    console.log(`Shared "${name}" project, ${branchToShare} branch, as ${options.visibility} repo`)
     return
   })
 
