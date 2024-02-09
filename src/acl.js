@@ -14,7 +14,7 @@ const ROLES = {
 }
 const DEFAULT_ACL = {
   visibility: 'public', // public|private 
-  protectedBranches: ['master'],
+  protectedBranches: ['master', 'main'],
   ACL: {}
 }
 
