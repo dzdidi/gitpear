@@ -7,7 +7,7 @@ const fs = require('fs')
 const APP_HOME = process.env.GIT_PEAR || `${homedir}/.gitpear`
 
 function createAppFolder (name) {
-  fs.mkdirSync(`${APP_HOME}/${name}/code`, { recursive: true })
+  fs.mkdirSync(`${APP_HOME}/${name}`, { recursive: true })
 }
 
 function shareAppFolder (name) {
@@ -24,7 +24,7 @@ function unshareAppFolder (name) {
 }
 
 function isInitialized (name) {
-  return fs.existsSync(`${APP_HOME}/${name}/code/HEAD`)
+  return fs.existsSync(`${APP_HOME}/${name}/HEAD`)
 }
 
 function isShared (name) {
@@ -39,7 +39,7 @@ function list (sharedOnly) {
 }
 
 function getCodePath (name) {
-  return `${APP_HOME}/${name}/code`
+  return `${APP_HOME}/${name}`
 }
 
 function readPk () {
