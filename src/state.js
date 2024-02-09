@@ -15,14 +15,15 @@ module.exports = async function setState (store, drives = {}) {
       await drives[repo].ready()
     }
 
-    const ls = await git.lsPromise(home.getCodePath(repo))
+    const homePath = home.getCodePath(repo)
+    const ls = await git.lsPromise(homePath)
 
     repositories[repo] = {}
     for (const ref in ls) {
       repositories[repo][ref] = ls[ref]
       announcedRefs[ls[ref]] = repo
 
-      const localPackStream = git.uploadPack(home.getCodePath(repo), ls[ref])
+      const localPackStream = git.uploadPack(homePath, ls[ref])
       const driveStream = drives[repo].createWriteStream(`/packs/${ls[ref]}.pack`)
       localPackStream.on('ready', () => localPackStream.stdout.pipe(driveStream))
     }

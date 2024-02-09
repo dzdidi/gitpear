@@ -28,7 +28,11 @@ const targetKey = matches[1]
 const repoName = matches[2]
 
 const store = new Corestore(RAM)
-const swarm = new Hyperswarm({ keyPair: home.getKeyPair() })
+const swarmOpts = {}
+if (process.env.GIT_PEAR_AUTH && process.env.GIT_PEAR_AUTH !== 'native') {
+  swarmOpts.keyPair = home.getKeyPair()
+}
+const swarm = new Hyperswarm(swarmOpts)
 
 if (!home.isDaemonRunning()) {
   console.error('Please start git pear daemon')

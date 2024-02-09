@@ -38,10 +38,11 @@ All data will be persisted in application directory (default `~/.gitpear`). To c
 
 * `git pear daemon <-s, --start | -k, --stop>` - start or stop daemon
 * `git pear key` - print out public key. Share it with your peers so that they can do `git pull pear:<public key>/<repo name>`
-* `git pear init [-s, --share] <path>` - It will create [bare repository](https://git-scm.com/docs/git-init#Documentation/git-init.txt---bare) of the same name in application directory (default ~/.gitpear/<repository name>). It will add [git remote](https://git-scm.com/docs/git-remote) in current repository with name `pear`. So just like in traditional flow doing `git push orign`, here we do `git push pear`. By default repository will not be shared. To enable sharing provide `-s` or call `gitpear share <path>` later
-* `git pear share <path>` - makes repository sharable
+* `git pear init <path> [-s, --share [branch]]` - It will create [bare repository](https://git-scm.com/docs/git-init#Documentation/git-init.txt---bare) of the same name in application directory (default ~/.gitpear/<repository name>). It will add [git remote](https://git-scm.com/docs/git-remote) in current repository with name `pear`. So just like in traditional flow doing `git push orign`, here we do `git push pear`. By default repository will not be shared. To enable sharing provide `-s | --share [branch]` (default branch to share is current) or call `gitpear share <path>` later
+* `git pear share [-p, --path [path (default: ".")]> [-b, --branch [branch name (default: "_current_")] [-v, --visibility <private|public> (default: "public")]` - share repository, if branch is not specified, default branch will be shared
 * `git pear unshare <path>` -  stop sharing repository
 * `git pear list [-s, --shared]` - list all or (only shared) repositories
+* `git pear list <url>` - list repositories of a peer
 
 ### ACL (for authenticated access to enable support of PUSH)
 

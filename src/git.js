@@ -20,6 +20,25 @@ async function getCommit () {
   })
 }
 
+async function getCurrentBranch () {
+  return await new Promise((resolve, reject) => {
+    const process = spawn('git', ['rev-parse', '--abbrev-ref', 'HEAD'])
+    let outBuffer = Buffer.from('')
+    process.stdout.on('data', data => {
+      outBuffer = Buffer.concat([outBuffer, data])
+    })
+
+    let errBuffer = Buffer.from('')
+    process.stderr.on('err', data => {
+      errBuffer = Buffer.concat([errBuffer, data])
+    })
+
+    process.on('close', code => {
+      return code === 0 ? resolve(outBuffer.toString().replace('\n', '')) : reject(errBuffer)
+    })
+  })
+}
+
 async function lsPromise (url) {
   const ls = spawn('git', ['ls-remote', url])
   const res = {}
@@ -201,4 +220,14 @@ async function unpackStream (packStream) {
   })
 }
 
-module.exports = { lsPromise, uploadPack, unpackFile, unpackStream, createBareRepo, addRemote, push, getCommit }
+module.exports = {
+  lsPromise,
+  uploadPack,
+  unpackFile,
+  unpackStream,
+  createBareRepo,
+  addRemote,
+  push,
+  getCommit,
+  getCurrentBranch,
+}
