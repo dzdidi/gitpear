@@ -165,3 +165,15 @@ Supported authentication methods are `native` and `nip98`. The `nip98` authentic
 * `git fetch pear`
 2. From there she can do
 * `git diff pear/feat/david` or `git pull pear feat/david` ... merge to master and push to `pear`
+
+
+## Migrate existing public repository to gitpear
+Docker image automatically clones the repository and exposes it over http and pear.
+
+Example:
+```
+git clone https://github.com/dzdidi/gitpear.git
+cd gitpear
+docker build -t gitpear .
+docker run -it -p 80:80 -e REPO_URL=https://github.com/dzdidi/repo.git gitpear 
+```
