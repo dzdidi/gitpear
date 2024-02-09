@@ -35,6 +35,8 @@ if [[ ! $REPO_NAME =~ ^https.* ]]; then
   echo "	receivepack = true" >> config
 #  git config --bool core.bare true
 fi
+PEAR_KEY=$(git pear key)
+PEAR_REPO=$(git pear list -s)
 echo "REPO_NAME: $REPO_NAME" >> /tmp/debug.log
 echo "ORIGINAL_NAME: $ORIGINAL_NAME" >> /tmp/debug.log
 echo "GIT_PEAR: $GIT_PEAR" >> /tmp/debug.log
