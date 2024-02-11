@@ -57,7 +57,7 @@ program
       branchToShare = options.share
     }
 
-    if (options.share) share(name, branchToShare)
+    if (options.share) await share(name, branchToShare)
   })
 
 program
@@ -78,7 +78,7 @@ program
 
     const currentBranch = await git.getCurrentBranch()
     const branchToShare = options.branch || currentBranch
-    share(name, branchToShare, options)
+    await share(name, branchToShare, options)
   })
 
 program
@@ -217,12 +217,10 @@ function localBranchProtectionRules(a, b, p, options) {
   }
 
   if (a === 'list' && !b) { logBranches(name) }
-
   if (a === 'add') {
     acl.addProtectedBranch(name, b)
     logBranches(name)
   }
-
   if (a === 'remove') {
     acl.removeProtectedBranch(name, b)
     logBranches(name)
@@ -302,9 +300,9 @@ function checkIfGitRepo(p) {
   }
 }
 
-function share(name, branchToShare, options) {
+async function share(name, branchToShare, options) {
   let aclOptions
-  let message = `Shared "${name}" project, ${branchToShare} branch`)
+  let message = `Shared "${name}" project, ${branchToShare} branch`
   if (options?.visibility) {
     aclOptions = { visibility: options.visibility }
     message = `${message}, as ${options.visibility} repo`
