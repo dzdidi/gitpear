@@ -1,11 +1,11 @@
 const ACL = require('../acl')
 
-async getACLHandler (publicKey, req) {
+async function getACLHandler (publicKey, req) {
   const { repoName, userId } = await this.parseACLRequest(publicKey, req)
   return Buffer.from(JSON.stringify(ACL.getACL(repoName)))
 }
 
-async addACLHandler (publicKey, req) {
+async function addACLHandler (publicKey, req) {
   const { repoName, userId, acl } = await this.parseACLRequest(publicKey, req)
 
   // TODO
@@ -14,17 +14,16 @@ async addACLHandler (publicKey, req) {
   return Buffer.from('ACL updated')
 }
 
-async delACLHandler (publicKey, req) {
+async function delACLHandler (publicKey, req) {
   const { repoName, userId, acl } = await this.parseACLRequest(publicKey, req)
 
 }
 
-async chgACLHandler (publicKey, req) {
+async function chgACLHandler (publicKey, req) {
   const { repoName, userId, acl } = await this.parseACLRequest(publicKey, req)
 }
 
-
-async parseACLRequest(publicKey, req) {
+async function parseACLRequest(publicKey, req) {
   if (!req) throw new Error('Request is empty')
   const request = JSON.parse(req.toString())
   const userId = await this.authenticate(publicKey, request)
