@@ -1,15 +1,15 @@
 const ACL = require('../acl')
 
-async getBPRHandler (publicKey, req) {
+async function getBPRHandler (publicKey, req) {
 }
 
-async addBPRHandler (publicKey, req) {
+async function addBPRHandler (publicKey, req) {
 }
 
-async delBPRHandler (publicKey, req) {
+async function delBPRHandler (publicKey, req) {
 }
 
-async parseBPRRequest(publicKey, req) {
+async function parseBPRRequest(publicKey, req) {
   if (!req) throw new Error('Request is empty')
   const request = JSON.parse(req.toString())
   const userId = await this.authenticate(publicKey, request)
