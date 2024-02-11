@@ -12,7 +12,7 @@ const home = require('./home')
 const acl = require('./acl')
 const git = require('./git')
 
-const { listRemote } = require('./rpc-requests')
+const { listRemote, bpr } = require('./rpc-requests')
 
 const pkg = require('../package.json')
 program
@@ -82,32 +82,47 @@ program
   })
 
 program
-  .command('branch')
-  .description('branch protection rules')
-  .addArgument(new commander.Argument('[a]', 'actiont to perform').choices(['add', 'remove', 'list']).default('list'))
-  .addArgument(new commander.Argument('[b]', 'branch name').default(''))
-  .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
-  .action(async (a, b, p, options) => {
-    if (p.startsWith('pear://')) {
-      await remoteBranchProtectionRules(a, b, p, options)
-    } else {
-      localBranchProtectionRules(a, b, p, options)
-    }
-  })
-
-
-program
   .command('acl')
-  .description('set acl of a gitpear repo')
+  .description('manage acl of a gitpear repo')
+  .option('-u, --user', 'user to add/remove/list')
+  .option('-b, --branch', 'branch to add/remove/list in protected branches')
   .addArgument(new commander.Argument('[a]', 'actiont to perform').choices(['add', 'remove', 'list']).default('list'))
-  .addArgument(new commander.Argument('[u]', 'user to add/remove/list').default(''))
+  .addArgument(new commander.Argument('[n]', 'user or branch to add/remove/list').default(''))
   .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
-  .action(async (a, u, p, options) => {
+  .action(async (a, n, p, options) => {
+    if (options.user && options.branch) {
+      throw new Error('Cannot perform both user and branch action at the same time')
+    }
 
-    if (p.startsWith('pear://')) {
-      await remoteACL(a, u, p, options)
-    } else {
-      localACL(a, u, p, options)
+    console.log(a, n, p, options)
+
+    if (!options.user && !options.branch) {
+      if (a !== 'list') throw new Error('Need either user or branch option')
+      const repoACL = await getACL(p)
+
+      console.log('Repo Visibility:', '\t', repoACL.visibility)
+      console.log('Protected Branch(s):', '\t', repoACL.protectedBranches.join(', '))
+      for (const u in repoACL.ACL) {
+        console.log('User:', u, '\t', repoACL.ACL[u])
+      }
+      return
+    }
+
+
+    if (options.user) {
+      if (p.startsWith('pear://') || n.startsWith('pear://')) {
+        // XXX
+        await remoteACL(a, n, p, options)
+      } else {
+        localACL(a, n, p, options)
+      }
+    } else if (options.branch) {
+      if (p.startsWith('pear://') || n.startsWith('pear://')) {
+        // XXX
+        await remoteBranchProtectionRules(a, n, p, options)
+      } else {
+        localBranchProtectionRules(a, n, p, options)
+      }
     }
   })
   
@@ -249,6 +264,7 @@ function localACL(a, u, p, options) {
 
   if (a === 'list') {
     console.log('Repo Visibility:', '\t', repoACL.visibility)
+    console.log('Protected Branch(s):', '\t', repoACL.protectedBranches.join(', '))
     console.log('User:', u, '\t', repoACL.ACL[u])
     return
   }
@@ -288,6 +304,9 @@ function localACL(a, u, p, options) {
 }
 
 async function remoteBranchProtectionRules(a, b, p, options) {
+  if (a === 'list') {
+    return await bpr.list(p)
+  }
 }
 
 async function remoteACL(a, b, p, options) {
@@ -317,7 +336,27 @@ async function share(name, branchToShare, options) {
 function logBranches(name) {
   const repoACL = acl.getACL(name)
   console.log('Visibility:', '\t', repoACL.visibility)
-  console.log('Protected Branch(s):')
-  for (const branch of repoACL.protectedBranches) { console.log(branch) }
+  console.log('Protected Branch(s):', '\t', repoACL.protectedBranches.join(', '))
+}
+
+async function getACL(p) {
+  return (p.startsWith('pear://')) ? (await getRemoteACL(p)) : (await getLocalACL(p))
+}
+
+async function getLocalACL(p) {
+  const fullPath = path.resolve(p)
+  checkIfGitRepo(fullPath)
+
+  const name = fullPath.split(path.sep).pop()
+  if (!home.isInitialized(name)) {
+    console.error(`${name} is not initialized`)
+    process.exit(1)
+  }
+
+  return acl.getACL(name)
+
+}
+
+async function getRemoteACL(p) {
 }
 program.parse()
