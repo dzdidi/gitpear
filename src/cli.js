@@ -12,6 +12,8 @@ const home = require('./home')
 const acl = require('./acl')
 const git = require('./git')
 
+const { listRemote } = require('./rpc-requests')
+
 const pkg = require('../package.json')
 program
   .name('gitpear')
@@ -99,37 +101,11 @@ program
   .addArgument(new commander.Argument('[b]', 'branch name').default(''))
   .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
   .action(async (a, b, p, options) => {
-    const fullPath = path.resolve(p)
-    if (!fs.existsSync(path.join(fullPath, '.git'))) {
-      console.error('Not a git repo')
-      process.exit(1)
+    if (p.startsWith('pear://')) {
+      await remoteBranchProtectionRules(a, b, p, options)
+    } else {
+      localBranchProtectionRules(a, b, p, options)
     }
-
-    const name = fullPath.split(path.sep).pop()
-    if (!home.isInitialized(name)) {
-      console.error(`${name} is not initialized`)
-      process.exit(1)
-    }
-
-    if (a === 'list' && !b) { logBranches(name) }
-
-    if (a === 'add') {
-      acl.addProtectedBranch(name, b)
-      logBranches(name)
-    }
-
-    if (a === 'remove') {
-      acl.removeProtectedBranch(name, b)
-      logBranches(name)
-    }
-
-    function logBranches(name) {
-      const repoACL = acl.getACL(name)
-      console.log('Visibility:', '\t', repoACL.visibility)
-      console.log('Branch:')
-      for (const branch of repoACL.protectedBranches) { console.log(branch) }
-    }
- 
     return
   })
 
@@ -142,66 +118,10 @@ program
   .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
   .action(async (a, u, p, options) => {
 
-    // TODO: add branch protection logic
-    const fullPath = path.resolve(p)
-    if (!fs.existsSync(path.join(fullPath, '.git'))) {
-      console.error('Not a git repo')
-      process.exit(1)
-    }
-
-    const name = fullPath.split(path.sep).pop()
-    if (!home.isInitialized(name)) {
-      console.error(`${name} is not initialized`)
-      process.exit(1)
-    }
-    const repoACL = acl.getACL(name)
-
-    if (a === 'list' && !u) {
-      console.log('Repo Visibility:', '\t', repoACL.visibility)
-      console.log('User:', '\t', 'Role:')
-      for (const user in repoACL.ACL) {
-        console.log(user, '\t', repoACL.ACL[user])
-      }
-      return
-    }
-
-    if (a === 'list') {
-      console.log('Repo Visibility:', '\t', repoACL.visibility)
-      console.log('User:', u, '\t', repoACL.ACL[u])
-      return
-    }
-
-    if (a === 'add') {
-      if (!u) {
-        console.error('User not provided')
-        process.exit(1)
-      }
-
-      const [ userId, role ] = u.split(':')
-      if (repoACL.ACL[userId]) {
-        console.error(`${userId} already has access to ${name} as ${repoACL.ACL[userId]}`)
-        process.exit(1)
-      }
-
-      acl.grantAccessToUser(name, userId, role)
-      console.log(`Added ${userId} to ${name} as ${role}`)
-      return
-    }
-
-    if (a === 'remove') {
-      if (!u) {
-        console.error('User not provided')
-        process.exit(1)
-      }
-
-      if (!repoACL.ACL[u]) {
-        console.error(`${u} does not have access to ${name}`)
-        process.exit(1)
-      }
-
-      acl.revokeAccessFromUser(name, u)
-      console.log(`Removed ${u} from ${name}`)
-      return
+    if (p.startsWith('pear://')) {
+      await remoteACL(a, u, p, options)
+    } else {
+      localACL(a, u, p, options)
     }
   })
   
@@ -235,7 +155,7 @@ program
   .addArgument(new commander.Argument('[u]', 'url to remote pear').default(''))
   .option('-s, --shared', 'list only shared repos')
   .action((u, options) => {
-    if (u) return require('./list-remote')(u)
+    if (u) return listRemote(u)
 
     const k = home.readPk()
     const s = options.shared
@@ -303,4 +223,105 @@ program
     }
   })
 
+function localBranchProtectionRules(a, b, p, options) {
+  const fullPath = path.resolve(p)
+  if (!fs.existsSync(path.join(fullPath, '.git'))) {
+    console.error('Not a git repo')
+    process.exit(1)
+  }
+
+  const name = fullPath.split(path.sep).pop()
+  if (!home.isInitialized(name)) {
+    console.error(`${name} is not initialized`)
+    process.exit(1)
+  }
+
+  if (a === 'list' && !b) { logBranches(name) }
+
+  if (a === 'add') {
+    acl.addProtectedBranch(name, b)
+    logBranches(name)
+  }
+
+  if (a === 'remove') {
+    acl.removeProtectedBranch(name, b)
+    logBranches(name)
+  }
+}
+
+function localACL(a, u, p, options) {
+  const fullPath = path.resolve(p)
+  if (!fs.existsSync(path.join(fullPath, '.git'))) {
+    console.error('Not a git repo')
+    process.exit(1)
+  }
+
+  const name = fullPath.split(path.sep).pop()
+  if (!home.isInitialized(name)) {
+    console.error(`${name} is not initialized`)
+    process.exit(1)
+  }
+  const repoACL = acl.getACL(name)
+
+  if (a === 'list' && !u) {
+    console.log('Repo Visibility:', '\t', repoACL.visibility)
+    console.log('User:', '\t', 'Role:')
+    for (const user in repoACL.ACL) {
+      console.log(user, '\t', repoACL.ACL[user])
+    }
+    return
+  }
+
+  if (a === 'list') {
+    console.log('Repo Visibility:', '\t', repoACL.visibility)
+    console.log('User:', u, '\t', repoACL.ACL[u])
+    return
+  }
+
+  if (a === 'add') {
+    if (!u) {
+      console.error('User not provided')
+      process.exit(1)
+    }
+
+    const [ userId, role ] = u.split(':')
+    if (repoACL.ACL[userId]) {
+      console.error(`${userId} already has access to ${name} as ${repoACL.ACL[userId]}`)
+      process.exit(1)
+    }
+
+    acl.grantAccessToUser(name, userId, role)
+    console.log(`Added ${userId} to ${name} as ${role}`)
+    return
+  }
+
+  if (a === 'remove') {
+    if (!u) {
+      console.error('User not provided')
+      process.exit(1)
+    }
+
+    if (!repoACL.ACL[u]) {
+      console.error(`${u} does not have access to ${name}`)
+      process.exit(1)
+    }
+
+    acl.revokeAccessFromUser(name, u)
+    console.log(`Removed ${u} from ${name}`)
+    return
+  }
+}
+
+async function remoteBranchProtectionRules(a, b, p, options) {
+}
+
+async function remoteACL(a, b, p, options) {
+}
+
+function logBranches(name) {
+  const repoACL = acl.getACL(name)
+  console.log('Visibility:', '\t', repoACL.visibility)
+  console.log('Branch:')
+  for (const branch of repoACL.protectedBranches) { console.log(branch) }
+}
 program.parse()
