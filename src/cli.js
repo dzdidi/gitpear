@@ -317,7 +317,7 @@ async function share(name, branchToShare, options) {
 function logBranches(name) {
   const repoACL = acl.getACL(name)
   console.log('Visibility:', '\t', repoACL.visibility)
-  console.log('Branch:')
+  console.log('Protected Branch(s):')
   for (const branch of repoACL.protectedBranches) { console.log(branch) }
 }
 program.parse()
