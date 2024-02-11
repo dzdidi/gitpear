@@ -1,5 +1,5 @@
-const list-remote = require('./list-remote')
+const listRemote = require('./list-remote')
 
 module.exports = {
-  list-remote,
+  listRemote,
 }

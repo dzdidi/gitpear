@@ -3,8 +3,8 @@ const ProtomuxRPC = require('protomux-rpc')
 const Hyperswarm = require('hyperswarm')
 const crypto = require('hypercore-crypto')
 
-const home = require('./home')
-const auth = require('./auth')
+const home = require('../home')
+const auth = require('../auth')
 
 module.exports = async function listRemote (url) {
   const matches = url.match(/pear:\/\/([a-f0-9]{64})/)
@@ -29,13 +29,14 @@ module.exports = async function listRemote (url) {
     const rpc = new ProtomuxRPC(socket)
 
     let payload = { body: { url, method: 'get-repos' } }
+    if (!process.env.GIT_PEAR_AUTH) {
+      console.debug('Retreiving data using un-authenticated access')
+    } else {
+      console.debug('Retreiving data using authenticated access')
+    }
     if (process.env.GIT_PEAR_AUTH && process.env.GIT_PEAR_AUTH !== 'native') {
       payload.header = await auth.getToken(payload.body)
-      console.debug('Retreiving data using authenticated access')
-    } else {
-      console.debug('Retreiving data using un-authenticated access')
     }
-    console.log()
 
     const reposRes = await rpc.request('get-repos', Buffer.from(JSON.stringify(payload)))
     const repositories = JSON.parse(reposRes.toString())
