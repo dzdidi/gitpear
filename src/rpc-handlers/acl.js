@@ -1,42 +1,41 @@
 const ACL = require('../acl')
+const home = require('../home')
 
 async function getACLHandler (publicKey, req) {
-  const { repoName, userId } = await this.parseACLRequest(publicKey, req)
-  return Buffer.from(JSON.stringify(ACL.getACL(repoName)))
+  const { repoName, userId, acl } = await parseACLRequest.bind(this)(publicKey, req)
+  const repoACL = ACL.getACL(repoName)
+
+  return JSON.stringify(repoACL)
 }
 
 async function addACLHandler (publicKey, req) {
-  const { repoName, userId, acl } = await this.parseACLRequest(publicKey, req)
+  const { repoName, userId, acl } = await parseACLRequest.bind(this)(publicKey, req)
 
-  // TODO
-  const aclData = JSON.parse(acl)
-  ACL.setACL(repoName, aclData)
-  return Buffer.from('ACL updated')
+  const { protectedBranches } = ACL.getACL(repoName)
+  return JSON.stringify({ protectedBranches })
 }
 
 async function delACLHandler (publicKey, req) {
-  const { repoName, userId, acl } = await this.parseACLRequest(publicKey, req)
+  const { repoName, userId, acl } = await parseACLRequest.bind(this)(publicKey, req)
 
-}
-
-async function chgACLHandler (publicKey, req) {
-  const { repoName, userId, acl } = await this.parseACLRequest(publicKey, req)
+  const { protectedBranches } = ACL.getACL(repoName)
+  return JSON.stringify({ protectedBranches })
 }
 
 async function parseACLRequest(publicKey, req) {
   if (!req) throw new Error('Request is empty')
   const request = JSON.parse(req.toString())
   const userId = await this.authenticate(publicKey, request)
-  const isOwner = ACL.getOwnder(repoName).includes(userId)
-  if (!isOwner) throw new Error('You are not allowed to access this repo')
-
   const repoName = request.body.url?.split('/')?.pop()
-  // TODO: check if repo exists
+
+  if (!home.isInitialized(repoName)) throw new Error('Repo does not exist')
+
+  const isOwner = ACL.getOwners(repoName).includes(userId)
+  if (!isOwner) throw new Error('You are not allowed to access this repo')
 
   return {
     repoName,
     userId,
-    // FIXME
     acl: request.body.acl,
   }
 }
@@ -45,5 +44,7 @@ module.exports = {
   getACLHandler,
   addACLHandler,
   delACLHandler,
-  chgACLHandler,
 }
+
+
+

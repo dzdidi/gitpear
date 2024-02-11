@@ -42,10 +42,6 @@ module.exports = class RPC {
     rpc.respond('add-acl', async req => await acl.addACLHandler.bind(this)(socket.remotePublicKey, req))
     rpc.respond('chg-acl', async req => await acl.chgCLHandler.bind(this)(socket.remotePublicKey, req))
     rpc.respond('del-acl', async req => await acl.delACLHandler.bind(this)(socket.remotePublicKey, req))
-    /* -- BRANCH HANDLERS -- */
-    rpc.respond('get-bpr', async req => await bpr.getBPRHandler.bind(this)(socket.remotePublicKey, req))
-    rpc.respond('add-bpr', async req => await bpr.addBPRHandler.bind(this)(socket.remotePublicKey, req))
-    rpc.respond('del-bpr', async req => await bpr.delBPRHandler.bind(this)(socket.remotePublicKey, req))
   }
 
   async authenticate (publicKey, request) {
