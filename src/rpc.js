@@ -3,7 +3,7 @@ const SecretStream = require('@hyperswarm/secret-stream')
 const { spawn } = require('child_process')
 const home = require('./home')
 const auth = require('./auth')
-const acl = require('./acl')
+const { git, acl, bpr } = require('./rpc-handlers')
 
 module.exports = class RPC {
   constructor (announcedRefs, repositories, drives) {
@@ -15,8 +15,9 @@ module.exports = class RPC {
 
   async setHandlers (socket, peerInfo) {
     if (this.connections[peerInfo.publicKey]) return this.connections[peerInfo.publicKey]
-
     const rpc = new ProtomuxRPC(socket)
+    this.connections[peerInfo.publicKey] = rpc
+
     rpc.on('error', err => console.error('rpc error', err))
     rpc.on('close', () => delete this.connections[peerInfo.publicKey])
     // XXX: handshaking can be used for access and permission management
@@ -24,131 +25,27 @@ module.exports = class RPC {
     // which can in turn be stored in a .git-daemon-export-ok file
 
     /* -- PULL HANDLERS -- */
-    rpc.respond('get-repos', async req => await this.getReposHandler(socket.remotePublicKey, req))
-    rpc.respond('get-refs',  async req => await this.getRefsHandler(socket.remotePublicKey, req))
+    rpc.respond('get-repos', async req => await git.getReposHandler.bind(this)(socket.remotePublicKey, req))
+    rpc.respond('get-refs',  async req => await git.getRefsHandler.bind(this)(socket.remotePublicKey, req))
 
-    if (process.env.GIT_PEAR_AUTH) {
-      /* -- PUSH HANDLERS -- */
-      rpc.respond('push',     async req => await this.pushHandler(socket.remotePublicKey, req))
-      rpc.respond('f-push',   async req => await this.forcePushHandler(socket.remotePublicKey, req))
-      rpc.respond('d-branch', async req => await this.deleteBranchHandler(socket.remotePublicKey, req))
-    }
+    if (!process.env.GIT_PEAR_AUTH) return
 
-    this.connections[peerInfo.publicKey] = rpc
-  }
+    /* -- PUSH HANDLERS -- */
+    rpc.respond('push',     async req => await git.pushHandler.bind(this)(socket.remotePublicKey, req))
+    rpc.respond('f-push',   async req => await git.forcePushHandler.bind(this)(socket.remotePublicKey, req))
+    rpc.respond('d-branch', async req => await git.deleteBranchHandler.bind(this)(socket.remotePublicKey, req))
 
-  async getReposHandler (publicKey, req) {
-    const { branch, url, userId } = await this.parseReq(publicKey, req)
+    /* -- REPO ADMINISTRATION HANDLERS -- */
 
-    const res = {}
-    for (const repoName in this.repositories) {
-      // TODO: add only public repos and those which are shared with the peer
-      // Alternatively return only requested repo
-      const isPublic = (acl.getACL(repoName).visibility === 'public')
-      if (isPublic || acl.getViewers(repoName).includes(userId)) {
-        res[repoName] = this.drives[repoName].key.toString('hex')
-      }
-    }
-    return Buffer.from(JSON.stringify(res))
-  }
-
-  async getRefsHandler (publicKey, req) {
-    const { repoName, branch, url, userId } = await this.parseReq(publicKey, req)
-    const res = this.repositories[repoName]
-
-    const isPublic = (acl.getACL(repoName).visibility === 'public')
-    if (isPublic || acl.getViewers(repoName).includes(userId)) {
-      return Buffer.from(JSON.stringify(res))
-    } else {
-      throw new Error('You are not allowed to access this repo')
-    }
-  }
-
-  async pushHandler (publicKey, req) {
-    const { url, repoName, branch, userId } = await this.parseReq(publicKey, req)
-    const isContributor = acl.getContributors(repoName).includes(userId)
-
-    if (!isContributor) throw new Error('You are not allowed to push to this repo')
-
-    const isProtectedBranch = acl.getACL(repoName).protectedBranches.includes(branch)
-    const isAdmin = acl.getAdmins(repoName).includes(userId)
-
-    if (isProtectedBranch && !isAdmin) throw new Error('You are not allowed to push to this branch')
-
-    return await new Promise((resolve, reject) => {
-      const env = { ...process.env, GIT_DIR: home.getCodePath(repoName) }
-      const child = spawn('git', ['fetch', url, `${branch}:${branch}`], { env })
-      let errBuffer = Buffer.from('')
-      child.stderr.on('data', data => {
-        errBuffer = Buffer.concat([errBuffer, data])
-      })
-
-      child.on('close', code => {
-        return code === 0 ? resolve(errBuffer) : reject(errBuffer)
-      })
-    })
-  }
-
-  async forcePushHandler (publicKey, req) {
-    const { url, repoName, branch, userId } = await this.parseReq(publicKey, req)
-    const isContributor = acl.getContributors(repoName).includes(userId)
-
-    if (!isContributor) throw new Error('You are not allowed to push to this repo')
-
-    const isProtectedBranch = acl.getACL(repoName).protectedBranches.includes(branch)
-    const isAdmin = acl.getAdmins(repoName).includes(userId)
-
-    if (isProtectedBranch && !isAdmin) throw new Error('You are not allowed to push to this branch')
-
-    return await new Promise((resolve, reject) => {
-      const env = { ...process.env, GIT_DIR: home.getCodePath(repoName) }
-      const child = spawn('git', ['fetch', url, `${branch}:${branch}`, '--force'], { env })
-      let errBuffer = Buffer.from('')
-      child.stderr.on('data', data => {
-        errBuffer = Buffer.concat([errBuffer, data])
-      })
-
-      child.on('close', code => {
-        return code === 0 ? resolve(errBuffer) : reject(errBuffer)
-      })
-    })
-  }
-
-  async deleteBranchHandler (publicKey, req) {
-    const { url, repoName, branch, userId } = await this.parseReq(publicKey, req)
-    const isContributor = acl.getContributors(repoName).includes(userId)
-
-    if (!isContributor) throw new Error('You are not allowed to push to this repo')
-
-    const isProtectedBranch = acl.getACL(repoName).protectedBranches.includes(branch)
-    const isAdmin = acl.getAdmins(repoName).includes(userId)
-
-    if (isProtectedBranch && !isAdmin) throw new Error('You are not allowed to push to this branch')
-
-    return await new Promise((resolve, reject) => {
-      const env = { ...process.env, GIT_DIR: home.getCodePath(repoName) }
-      const child = spawn('git', ['branch', '-D', branch], { env })
-      let errBuffer = Buffer.from('')
-      child.stderr.on('data', data => {
-        errBuffer = Buffer.concat([errBuffer, data])
-      })
-
-      child.on('close', code => {
-        return code === 0 ? resolve(errBuffer) : reject(errBuffer)
-      })
-    })
-  }
-
-  async parseReq(publicKey, req) {
-    if (!req) throw new Error('Request is empty')
-    const request = JSON.parse(req.toString())
-    const parsed = {
-      repoName: request.body.url?.split('/')?.pop(),
-      branch: request.body.data?.split('#')[0],
-      url: request.body.url,
-      userId: await this.authenticate(publicKey, request),
-    }
-    return parsed
+    /* -- ACL HANDLERS -- */
+    rpc.respond('get-acl', async req => await acl.getACLHandler.bind(this)(socket.remotePublicKey, req))
+    rpc.respond('add-acl', async req => await acl.addACLHandler.bind(this)(socket.remotePublicKey, req))
+    rpc.respond('chg-acl', async req => await acl.chgCLHandler.bind(this)(socket.remotePublicKey, req))
+    rpc.respond('del-acl', async req => await acl.delACLHandler.bind(this)(socket.remotePublicKey, req))
+    /* -- BRANCH HANDLERS -- */
+    rpc.respond('get-bpr', async req => await bpr.getBPRHandler.bind(this)(socket.remotePublicKey, req))
+    rpc.respond('add-bpr', async req => await bpr.addBPRHandler.bind(this)(socket.remotePublicKey, req))
+    rpc.respond('del-bpr', async req => await bpr.delBPRHandler.bind(this)(socket.remotePublicKey, req))
   }
 
   async authenticate (publicKey, request) {
