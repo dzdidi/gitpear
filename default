@@ -1,0 +1,18 @@
+server {
+    listen       80;
+    server_name  _;
+
+    # This is where the repositories live on the server
+    root /srv/repos/pear;
+
+
+    location ~ (/.*) {
+        fastcgi_pass  unix:/var/run/fcgiwrap.socket;
+        include       fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME     /usr/lib/git-core/git-http-backend;
+        # export all repositories under GIT_PROJECT_ROOT
+        fastcgi_param GIT_HTTP_EXPORT_ALL "";
+        fastcgi_param GIT_PROJECT_ROOT    /srv/repos/pear;
+        fastcgi_param PATH_INFO           $1;
+    }
+}
