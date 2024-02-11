@@ -27,16 +27,15 @@ program
   .option('-s, --share [branch]', 'share the repo as public, default false, default branch is current', '')
   .action(async (p, options) => {
     const fullPath = path.resolve(p)
-    if (!fs.existsSync(path.join(fullPath, '.git'))) {
-      console.error('Not a git repo')
-      process.exit(1)
-    }
+    checkIfGitRepo(fullPath)
 
     const name = fullPath.split(path.sep).pop()
     if ((home.isInitialized(name))) {
       console.error(`${name} is already initialized`)
-      await git.addRemote(name)
-      console.log(`Added git remote for "${name}" as "pear"`)
+      try {
+        await git.addRemote(name)
+        console.log(`Added git remote for "${name}" as "pear"`)
+      } catch (e) { }
       process.exit(1)
     }
 
@@ -58,12 +57,7 @@ program
       branchToShare = options.share
     }
 
-    if (options.share) {
-      try { home.shareAppFolder(name) } catch (e) { }
-      try { acl.setACL(name) } catch (e) { }
-      try { await git.push(branchToShare) } catch (e) { }
-      console.log(`Shared "${name}" project, ${branchToShare} branch`)
-    }
+    if (options.share) share(name, branchToShare)
   })
 
 program
@@ -74,10 +68,7 @@ program
   .option('-p, --path [p]', 'path to the repo', '.')
   .action(async (options) => {
     const fullPath = path.resolve(options.path)
-    if (!fs.existsSync(path.join(fullPath, '.git'))) {
-      console.error('Not a git repo')
-      process.exit(1)
-    }
+    checkIfGitRepo(fullPath)
 
     const name = fullPath.split(path.sep).pop()
     if (!home.isInitialized(name)) {
@@ -87,11 +78,7 @@ program
 
     const currentBranch = await git.getCurrentBranch()
     const branchToShare = options.branch || currentBranch
-    try { home.shareAppFolder(name) } catch (e) { }
-    try { acl.setACL(name, { visibility: options.visibility }) } catch (e) { }
-    try { await git.push(branchToShare) } catch (e) { }
-    console.log(`Shared "${name}" project, ${branchToShare} branch, as ${options.visibility} repo`)
-    return
+    share(name, branchToShare, options)
   })
 
 program
@@ -106,7 +93,6 @@ program
     } else {
       localBranchProtectionRules(a, b, p, options)
     }
-    return
   })
 
 
@@ -132,10 +118,7 @@ program
   .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
   .action((p, options) => {
     const fullPath = path.resolve(p)
-    if (!fs.existsSync(path.join(fullPath, '.git'))) {
-      console.error('Not a git repo')
-      process.exit(1)
-    }
+    checkIfGitRepo(fullPath)
 
     const name = fullPath.split(path.sep).pop()
     if ((home.isInitialized(name))) {
@@ -225,10 +208,7 @@ program
 
 function localBranchProtectionRules(a, b, p, options) {
   const fullPath = path.resolve(p)
-  if (!fs.existsSync(path.join(fullPath, '.git'))) {
-    console.error('Not a git repo')
-    process.exit(1)
-  }
+  checkIfGitRepo(fullPath)
 
   const name = fullPath.split(path.sep).pop()
   if (!home.isInitialized(name)) {
@@ -251,10 +231,7 @@ function localBranchProtectionRules(a, b, p, options) {
 
 function localACL(a, u, p, options) {
   const fullPath = path.resolve(p)
-  if (!fs.existsSync(path.join(fullPath, '.git'))) {
-    console.error('Not a git repo')
-    process.exit(1)
-  }
+  checkIfGitRepo(fullPath)
 
   const name = fullPath.split(path.sep).pop()
   if (!home.isInitialized(name)) {
@@ -316,6 +293,27 @@ async function remoteBranchProtectionRules(a, b, p, options) {
 }
 
 async function remoteACL(a, b, p, options) {
+}
+
+function checkIfGitRepo(p) {
+  if (!fs.existsSync(path.join(p, '.git'))) {
+    console.error('Not a git repo')
+    process.exit(1)
+  }
+}
+
+function share(name, branchToShare, options) {
+  let aclOptions
+  let message = `Shared "${name}" project, ${branchToShare} branch`)
+  if (options?.visibility) {
+    aclOptions = { visibility: options.visibility }
+    message = `${message}, as ${options.visibility} repo`
+  }
+
+  try { home.shareAppFolder(name) } catch (e) { }
+  try { acl.setACL(name, aclOptions) } catch (e) { }
+  try { await git.push(branchToShare) } catch (e) { }
+  console.log(message)
 }
 
 function logBranches(name) {
