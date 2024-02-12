@@ -29,7 +29,7 @@ const repoName = matches[2]
 
 const store = new Corestore(RAM)
 const swarmOpts = {}
-if (process.env.GIT_PEAR_AUTH && process.env.GIT_PEAR_AUTH !== 'native') {
+if (process.env.GIT_PEAR_AUTH === 'native') {
   swarmOpts.keyPair = home.getKeyPair()
 }
 const swarm = new Hyperswarm(swarmOpts)

@@ -18,7 +18,7 @@ module.exports = async function listRemote (url) {
   console.log('Connecting to:', targetKey)
 
   const swarmOpts = {}
-  if (process.env.GIT_PEAR_AUTH && process.env.GIT_PEAR_AUTH !== 'native') {
+  if (process.env.GIT_PEAR_AUTH === 'native') {
     swarmOpts.keyPair = home.getKeyPair()
   }
   const swarm = new Hyperswarm(swarmOpts)

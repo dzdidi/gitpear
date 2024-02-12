@@ -1,6 +1,7 @@
 const { nip98, nip19, finalizeEvent } = require('nostr-tools')
 
 async function getToken({ url, method, data }) {
+  if (!process.env.GIT_PEAR_AUTH_NSEC) throw new Error('Missing NSEC')
   const { data: sK } = nip19.decode(process.env.GIT_PEAR_AUTH_NSEC)
   return nip98.getToken(
     url,
