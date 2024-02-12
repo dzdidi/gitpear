@@ -1,7 +1,7 @@
 const listRemote = require('./list-remote')
-const bpr = require('./bpr-remote')
+const aclRemote = require('./acl-remote')
 
 module.exports = {
   listRemote,
-  bpr,
+  aclRemote,
 }

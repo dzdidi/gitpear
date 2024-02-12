@@ -3,7 +3,7 @@ const SecretStream = require('@hyperswarm/secret-stream')
 const { spawn } = require('child_process')
 const home = require('./home')
 const auth = require('./auth')
-const { git, acl, bpr } = require('./rpc-handlers')
+const { git, acl } = require('./rpc-handlers')
 
 module.exports = class RPC {
   constructor (announcedRefs, repositories, drives) {

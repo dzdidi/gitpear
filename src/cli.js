@@ -12,7 +12,7 @@ const home = require('./home')
 const acl = require('./acl')
 const git = require('./git')
 
-const { listRemote, bpr } = require('./rpc-requests')
+const { listRemote, aclRemote } = require('./rpc-requests')
 
 const pkg = require('../package.json')
 program
@@ -94,11 +94,11 @@ program
       throw new Error('Cannot perform both user and branch action at the same time')
     }
 
-    console.log(a, n, p, options)
+    console.log("INPUT", a, n, p, options)
 
     if (!options.user && !options.branch) {
       if (a !== 'list') throw new Error('Need either user or branch option')
-      const repoACL = await getACL(p)
+      const repoACL = await retreiveACL(a, n, p)
 
       console.log('Repo Visibility:', '\t', repoACL.visibility)
       console.log('Protected Branch(s):', '\t', repoACL.protectedBranches.join(', '))
@@ -108,17 +108,22 @@ program
       return
     }
 
-
     if (options.user) {
-      if (p.startsWith('pear://') || n.startsWith('pear://')) {
-        // XXX
+      if (p.startsWith('pear://')) {
+        console.log('a', a, 'n', n, 'p', p, 'options', options)
+        await remoteACL(a, n, p, options)
+      } else if (n.startsWith('pear://')) {
+        console.log('a', a, 'n', n, 'p', p, 'options', options)
         await remoteACL(a, n, p, options)
       } else {
         localACL(a, n, p, options)
       }
     } else if (options.branch) {
-      if (p.startsWith('pear://') || n.startsWith('pear://')) {
-        // XXX
+      if (p.startsWith('pear://')) {
+        console.log('a', a, 'n', n, 'p', p, 'options', options)
+        await remoteBranchProtectionRules(a, n, p, options)
+      } else if (n.startsWith('pear://')) {
+        console.log('a', a, 'n', n, 'p', p, 'options', options)
         await remoteBranchProtectionRules(a, n, p, options)
       } else {
         localBranchProtectionRules(a, n, p, options)
@@ -305,7 +310,7 @@ function localACL(a, u, p, options) {
 
 async function remoteBranchProtectionRules(a, b, p, options) {
   if (a === 'list') {
-    return await bpr.list(p)
+    return await acl.list(p)
   }
 }
 
@@ -339,7 +344,10 @@ function logBranches(name) {
   console.log('Protected Branch(s):', '\t', repoACL.protectedBranches.join(', '))
 }
 
-async function getACL(p) {
+async function retreiveACL(a, n, p) {
+  console.log('getting acl', 'a', a)
+  console.log('getting acl', 'n', n)
+  console.log('getting acl', 'p', p)
   return (p.startsWith('pear://')) ? (await getRemoteACL(p)) : (await getLocalACL(p))
 }
 
@@ -358,5 +366,6 @@ async function getLocalACL(p) {
 }
 
 async function getRemoteACL(p) {
+  console.log('getting remote acl')
 }
 program.parse()
