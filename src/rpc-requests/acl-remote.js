@@ -6,15 +6,43 @@ const crypto = require('hypercore-crypto')
 const home = require('../home')
 const auth = require('../auth')
 
-async function list (url, name) {
-  const matches = url.match(/pear:\/\/([a-f0-9]{64})/)
+const { printACL, printACLForUser, logBranches } = require('../utils')
 
-  if (!matches || matches.length < 2) {
+async function list(url, name, rpc, opts) {
+  const payload = { body: { url, method: 'get-acl' } }
+  if (process.env.GIT_PEAR_AUTH && process.env.GIT_PEAR_AUTH !== 'native') {
+    payload.header = await auth.getToken(payload.body)
+  }
+  const repoACLres = await rpc.request('get-acl', Buffer.from(JSON.stringify(payload)))
+  const repoACL = JSON.parse(repoACLres.toString())
+
+  opts.branch ? listACLBranch(repoACL) : listACLUser(repoACL, name)
+  process.exit(0)
+}
+
+function listACLUser(repoACL, u) {
+  u ? printACLForUser(repoACL, u) : printACL(repoACL)
+}
+
+function listACLBranch(repoACL) {
+  logBranches(repoACL)
+}
+
+async function wrapper (url, name, opts = {}, cb) {
+  if (typeof opts === 'function') {
+    cb = opts
+    opts = {}
+  }
+
+  const matches = url.match(/pear:\/\/([a-f0-9]{64})\/(.*)/)
+
+  if (!matches || matches.length < 3) {
     console.error('Invalid URL')
     process.exit(1)
   }
 
   const targetKey = matches[1]
+  const repoName = matches[2]
   console.log('Connecting to:', targetKey)
 
   const swarmOpts = {}
@@ -44,30 +72,15 @@ async function list (url, name) {
       console.error('Failed to retrieve repositories')
       process.exit(1)
     }
-
-    paylod = { body: { url, method: 'get-acl' } }
-    if (process.env.GIT_PEAR_AUTH && process.env.GIT_PEAR_AUTH !== 'native') {
-      payload.header = await auth.getToken(payload.body)
-    }
-    const repoACLres = await rpc.request('get-acl', Buffer.from(JSON.stringify(payload)))
-    const repoACL = JSON.parse(repoACLres.toString())
-
-    console.log('Repo Visibility:', '\t', repoACL.visibility)
-    console.log('Protected Branch(s):', '\t', repoACL.protectedBranches.join(', '))
-    console.log('User:', '\t', 'Role:')
-    if (name) {
-      console.log(name, '\t', repoACL.ACL[name])
-      process.exit(0)
+    if (!repositories[repoName]) {
+      console.error('Repository not found')
+      process.exit(1)
     }
 
-    for (const user in repoACL.ACL) {
-      console.log(user, '\t', repoACL.ACL[user])
-    }
-
-    process.exit(0)
+    await cb(url, name, rpc, opts)
   })
 }
 
 module.exports = {
-  list,
+  list: (url, name, opts) => wrapper(url, name, opts, list)
 }

@@ -14,6 +14,8 @@ const git = require('./git')
 
 const { listRemote, aclRemote } = require('./rpc-requests')
 
+const { printACL, printACLForUser, checkIfGitRepo, logBranches } = require('./utils')
+
 const pkg = require('../package.json')
 program
   .name('gitpear')
@@ -106,12 +108,14 @@ program
 
     if (options.user) {
       if (p.startsWith('pear://')) {
+        if (n === '.') n = ''
         await remoteACL(a, n, p, options)
       } else {
         localACL(a, n, p, options)
       }
     } else if (options.branch) {
       if (p.startsWith('pear://')) {
+        if (n === '.') n = ''
         await remoteBranchProtectionRules(a, n, p, options)
       } else {
         localBranchProtectionRules(a, n, p, options)
@@ -224,14 +228,20 @@ function localBranchProtectionRules(a, b, p, options) {
     process.exit(1)
   }
 
-  if (a === 'list' && !b) { logBranches(name) }
+  if (a === 'list' && !b) {
+    const repoACL = acl.getACL(name)
+    logBranches(repoACL)
+  }
+
   if (a === 'add') {
     acl.addProtectedBranch(name, b)
-    logBranches(name)
+    const repoACL = acl.getACL(name)
+    logBranches(repoACL)
   }
   if (a === 'remove') {
     acl.removeProtectedBranch(name, b)
-    logBranches(name)
+    const repoACL = acl.getACL(name)
+    logBranches(repoACL)
   }
 }
 
@@ -247,19 +257,12 @@ function localACL(a, u, p, options) {
   const repoACL = acl.getACL(name)
 
   if (a === 'list' && !u) {
-    console.log('Repo Visibility:', '\t', repoACL.visibility)
-    console.log('Protected Branch(s):', '\t', repoACL.protectedBranches.join(', '))
-    console.log('User:', '\t', 'Role:')
-    for (const user in repoACL.ACL) {
-      console.log(user, '\t', repoACL.ACL[user])
-    }
+    printACL(repoACL)
     return
   }
 
   if (a === 'list') {
-    console.log('Repo Visibility:', '\t', repoACL.visibility)
-    console.log('Protected Branch(s):', '\t', repoACL.protectedBranches.join(', '))
-    console.log('User:', u, '\t', repoACL.ACL[u])
+    printACLForUser(repoACL, u)
     return
   }
 
@@ -298,11 +301,12 @@ function localACL(a, u, p, options) {
 }
 
 async function remoteBranchProtectionRules(a, b, p, options) {
-  // TODO
   if (a === 'list') {
-    await aclRemote.list(p)
+    await aclRemote.list(p, b, { branch: true })
   } else if (a === 'add') {
+    await aclRemote.add(p, b, { branch: true })
   } else if (a === 'remove') {
+    await aclRemote.remove(p, b, { branch: true })
   } else {
     throw new Error('Invalid action')
   }
@@ -310,18 +314,13 @@ async function remoteBranchProtectionRules(a, b, p, options) {
 
 async function remoteACL(a, b, p, options) {
   if (a === 'list') {
-    await aclRemote.list(p)
+    await aclRemote.list(p, b)
   } else if (a === 'add') {
+    await aclRemote.add(p, b)
   } else if (a === 'remove') {
+    await aclRemote.remove(p, b)
   } else {
     throw new Error('Invalid action')
-  }
-}
-
-function checkIfGitRepo(p) {
-  if (!fs.existsSync(path.join(p, '.git'))) {
-    console.error('Not a git repo')
-    process.exit(1)
   }
 }
 
@@ -337,12 +336,6 @@ async function share(name, branchToShare, options) {
   try { acl.setACL(name, aclOptions) } catch (e) { }
   try { await git.push(branchToShare) } catch (e) { }
   console.log(message)
-}
-
-function logBranches(name) {
-  const repoACL = acl.getACL(name)
-  console.log('Repo Visibility:', '\t', repoACL.visibility)
-  console.log('Protected Branch(s):', '\t', repoACL.protectedBranches.join(', '))
 }
 
 program.parse()
