@@ -6,7 +6,7 @@ const crypto = require('hypercore-crypto')
 const home = require('../home')
 const auth = require('../auth')
 
-async function list (url) {
+async function list (url, name) {
   const matches = url.match(/pear:\/\/([a-f0-9]{64})/)
 
   if (!matches || matches.length < 2) {
@@ -49,8 +49,20 @@ async function list (url) {
     if (process.env.GIT_PEAR_AUTH && process.env.GIT_PEAR_AUTH !== 'native') {
       payload.header = await auth.getToken(payload.body)
     }
-    const repoACL = await rpc.request('get-acl', Buffer.from(JSON.stringify(payload)))
-    console.log('REPO ACL:', JSON.parse(repoACL.toString()))
+    const repoACLres = await rpc.request('get-acl', Buffer.from(JSON.stringify(payload)))
+    const repoACL = JSON.parse(repoACLres.toString())
+
+    console.log('Repo Visibility:', '\t', repoACL.visibility)
+    console.log('Protected Branch(s):', '\t', repoACL.protectedBranches.join(', '))
+    console.log('User:', '\t', 'Role:')
+    if (name) {
+      console.log(name, '\t', repoACL.ACL[name])
+      process.exit(0)
+    }
+
+    for (const user in repoACL.ACL) {
+      console.log(user, '\t', repoACL.ACL[user])
+    }
 
     process.exit(0)
   })

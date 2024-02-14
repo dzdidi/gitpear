@@ -94,36 +94,24 @@ program
       throw new Error('Cannot perform both user and branch action at the same time')
     }
 
-    console.log("INPUT", a, n, p, options)
-
     if (!options.user && !options.branch) {
-      if (a !== 'list') throw new Error('Need either user or branch option')
-      const repoACL = await retreiveACL(a, n, p)
+      throw new Error('Either user or branch option is required')
+    }
 
-      console.log('Repo Visibility:', '\t', repoACL.visibility)
-      console.log('Protected Branch(s):', '\t', repoACL.protectedBranches.join(', '))
-      for (const u in repoACL.ACL) {
-        console.log('User:', u, '\t', repoACL.ACL[u])
-      }
-      return
+    if (n.startsWith('pear://')) {
+      let swap = n
+      n = p
+      p = swap
     }
 
     if (options.user) {
       if (p.startsWith('pear://')) {
-        console.log('a', a, 'n', n, 'p', p, 'options', options)
-        await remoteACL(a, n, p, options)
-      } else if (n.startsWith('pear://')) {
-        console.log('a', a, 'n', n, 'p', p, 'options', options)
         await remoteACL(a, n, p, options)
       } else {
         localACL(a, n, p, options)
       }
     } else if (options.branch) {
       if (p.startsWith('pear://')) {
-        console.log('a', a, 'n', n, 'p', p, 'options', options)
-        await remoteBranchProtectionRules(a, n, p, options)
-      } else if (n.startsWith('pear://')) {
-        console.log('a', a, 'n', n, 'p', p, 'options', options)
         await remoteBranchProtectionRules(a, n, p, options)
       } else {
         localBranchProtectionRules(a, n, p, options)
@@ -260,6 +248,7 @@ function localACL(a, u, p, options) {
 
   if (a === 'list' && !u) {
     console.log('Repo Visibility:', '\t', repoACL.visibility)
+    console.log('Protected Branch(s):', '\t', repoACL.protectedBranches.join(', '))
     console.log('User:', '\t', 'Role:')
     for (const user in repoACL.ACL) {
       console.log(user, '\t', repoACL.ACL[user])
@@ -309,12 +298,24 @@ function localACL(a, u, p, options) {
 }
 
 async function remoteBranchProtectionRules(a, b, p, options) {
+  // TODO
   if (a === 'list') {
-    return await acl.list(p)
+    await aclRemote.list(p)
+  } else if (a === 'add') {
+  } else if (a === 'remove') {
+  } else {
+    throw new Error('Invalid action')
   }
 }
 
 async function remoteACL(a, b, p, options) {
+  if (a === 'list') {
+    await aclRemote.list(p)
+  } else if (a === 'add') {
+  } else if (a === 'remove') {
+  } else {
+    throw new Error('Invalid action')
+  }
 }
 
 function checkIfGitRepo(p) {
@@ -340,32 +341,8 @@ async function share(name, branchToShare, options) {
 
 function logBranches(name) {
   const repoACL = acl.getACL(name)
-  console.log('Visibility:', '\t', repoACL.visibility)
+  console.log('Repo Visibility:', '\t', repoACL.visibility)
   console.log('Protected Branch(s):', '\t', repoACL.protectedBranches.join(', '))
 }
 
-async function retreiveACL(a, n, p) {
-  console.log('getting acl', 'a', a)
-  console.log('getting acl', 'n', n)
-  console.log('getting acl', 'p', p)
-  return (p.startsWith('pear://')) ? (await getRemoteACL(p)) : (await getLocalACL(p))
-}
-
-async function getLocalACL(p) {
-  const fullPath = path.resolve(p)
-  checkIfGitRepo(fullPath)
-
-  const name = fullPath.split(path.sep).pop()
-  if (!home.isInitialized(name)) {
-    console.error(`${name} is not initialized`)
-    process.exit(1)
-  }
-
-  return acl.getACL(name)
-
-}
-
-async function getRemoteACL(p) {
-  console.log('getting remote acl')
-}
 program.parse()

@@ -40,7 +40,6 @@ module.exports = class RPC {
     /* -- ACL HANDLERS -- */
     rpc.respond('get-acl', async req => await acl.getACLHandler.bind(this)(socket.remotePublicKey, req))
     rpc.respond('add-acl', async req => await acl.addACLHandler.bind(this)(socket.remotePublicKey, req))
-    rpc.respond('chg-acl', async req => await acl.chgCLHandler.bind(this)(socket.remotePublicKey, req))
     rpc.respond('del-acl', async req => await acl.delACLHandler.bind(this)(socket.remotePublicKey, req))
   }
 

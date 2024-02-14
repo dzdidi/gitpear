@@ -5,21 +5,21 @@ async function getACLHandler (publicKey, req) {
   const { repoName, userId, acl } = await parseACLRequest.bind(this)(publicKey, req)
   const repoACL = ACL.getACL(repoName)
 
-  return JSON.stringify(repoACL)
+  return Buffer.from(JSON.stringify(repoACL))
 }
 
 async function addACLHandler (publicKey, req) {
   const { repoName, userId, acl } = await parseACLRequest.bind(this)(publicKey, req)
 
-  const { protectedBranches } = ACL.getACL(repoName)
-  return JSON.stringify({ protectedBranches })
+  const repoACL = ACL.getACL(repoName)
+  return Buffer.from(JSON.stringify(repoACL))
 }
 
 async function delACLHandler (publicKey, req) {
   const { repoName, userId, acl } = await parseACLRequest.bind(this)(publicKey, req)
 
-  const { protectedBranches } = ACL.getACL(repoName)
-  return JSON.stringify({ protectedBranches })
+  const repoACL = ACL.getACL(repoName)
+  return Buffer.from(JSON.stringify(repoACL))
 }
 
 async function parseACLRequest(publicKey, req) {
@@ -45,6 +45,3 @@ module.exports = {
   addACLHandler,
   delACLHandler,
 }
-
-
-
