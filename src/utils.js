@@ -30,6 +30,7 @@ function logBranches(repoACL) {
 
 module.exports = {
   printACL,
+  printACLForUser,
   checkIfGitRepo,
   logBranches,
 }

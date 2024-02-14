@@ -9,14 +9,18 @@ async function getACLHandler (publicKey, req) {
 }
 
 async function addACLHandler (publicKey, req) {
-  const { repoName, userId, acl } = await parseACLRequest.bind(this)(publicKey, req)
+  const { repoName, userId, acl, isBranch, name } = await parseACLRequest.bind(this)(publicKey, req)
+
+  isBranch ? ACL.addProtectedBranch(repoName, name) : ACL.grantAccessToUser(repoName, ...name.split(':'))
 
   const repoACL = ACL.getACL(repoName)
   return Buffer.from(JSON.stringify(repoACL))
 }
 
 async function delACLHandler (publicKey, req) {
-  const { repoName, userId, acl } = await parseACLRequest.bind(this)(publicKey, req)
+  const { repoName, userId, acl, isBranch, name } = await parseACLRequest.bind(this)(publicKey, req)
+
+  isBranch ? ACL.removeProtectedBranch(repoName, name) : ACL.revokeAccessFromUser(repoName, name)
 
   const repoACL = ACL.getACL(repoName)
   return Buffer.from(JSON.stringify(repoACL))
@@ -35,8 +39,10 @@ async function parseACLRequest(publicKey, req) {
 
   return {
     repoName,
+    name: request.body.name,
     userId,
     acl: request.body.acl,
+    isBranch: !!request.body.branch,
   }
 }
 

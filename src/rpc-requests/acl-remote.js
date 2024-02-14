@@ -28,6 +28,34 @@ function listACLBranch(repoACL) {
   logBranches(repoACL)
 }
 
+async function add(url, name, rpc, opts) {
+  const payload = { body: { url, method: 'add-acl', name } }
+  if (opts.branch) payload.body.branch = true
+
+  if (process.env.GIT_PEAR_AUTH && process.env.GIT_PEAR_AUTH !== 'native') {
+    payload.header = await auth.getToken(payload.body)
+  }
+  const repoACLres = await rpc.request('add-acl', Buffer.from(JSON.stringify(payload)))
+  const repoACL = JSON.parse(repoACLres.toString())
+  opts.branch ? listACLBranch(repoACL) : listACLUser(repoACL, name.split(':')[0])
+
+  process.exit(0)
+}
+
+async function del(url, name, rpc, opts) {
+  const payload = { body: { url, method: 'del-acl', name } }
+  if (opts.branch) payload.body.branch = true
+
+  if (process.env.GIT_PEAR_AUTH && process.env.GIT_PEAR_AUTH !== 'native') {
+    payload.header = await auth.getToken(payload.body)
+  }
+  const repoACLres = await rpc.request('del-acl', Buffer.from(JSON.stringify(payload)))
+  const repoACL = JSON.parse(repoACLres.toString())
+  opts.branch ? listACLBranch(repoACL) : listACLUser(repoACL, name)
+
+  process.exit(0)
+}
+
 async function wrapper (url, name, opts = {}, cb) {
   if (typeof opts === 'function') {
     cb = opts
@@ -82,5 +110,7 @@ async function wrapper (url, name, opts = {}, cb) {
 }
 
 module.exports = {
-  list: (url, name, opts) => wrapper(url, name, opts, list)
+  list: (url, name, opts) => wrapper(url, name, opts, list),
+  add: (url, name, opts) => wrapper(url, name, opts, add),
+  remove: (url, name, opts) => wrapper(url, name, opts, del),
 }

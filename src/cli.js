@@ -305,7 +305,15 @@ async function remoteBranchProtectionRules(a, b, p, options) {
     await aclRemote.list(p, b, { branch: true })
   } else if (a === 'add') {
     await aclRemote.add(p, b, { branch: true })
+    if (!b) {
+      console.error('branch is not provided')
+      process.exit(1)
+    }
   } else if (a === 'remove') {
+    if (!b) {
+      console.error('branch is not provided')
+      process.exit(1)
+    }
     await aclRemote.remove(p, b, { branch: true })
   } else {
     throw new Error('Invalid action')
@@ -316,8 +324,20 @@ async function remoteACL(a, b, p, options) {
   if (a === 'list') {
     await aclRemote.list(p, b)
   } else if (a === 'add') {
+    if (!b) {
+      console.error('User not provided')
+      process.exit(1)
+    }
+    if (b.split(':').length !== 2) {
+      console.error('Invalid role')
+      process.exit(1)
+    }
     await aclRemote.add(p, b)
   } else if (a === 'remove') {
+    if (!b) {
+      console.error('User not provided')
+      process.exit(1)
+    }
     await aclRemote.remove(p, b)
   } else {
     throw new Error('Invalid action')
