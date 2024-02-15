@@ -7,8 +7,8 @@ test('acl', async t => {
   t.test('setACL', async t => {
     const aclObj = acl.setACL(repoName)
     t.is(aclObj.visibility, 'public')
-    t.is(aclObj.protectedBranches.length, 1)
-    t.is(aclObj.protectedBranches[0], 'master')
+    t.is(aclObj.protectedBranches.length, 2)
+    t.ok(aclObj.protectedBranches.includes('master') && aclObj.protectedBranches.includes('main'))
     t.is(Object.keys(aclObj.ACL).length, 0)
   })
 
@@ -34,12 +34,12 @@ test('acl', async t => {
 
   test('addProtectedBranch', async t => {
     acl.addProtectedBranch(repoName, 'branch1')
-    t.is(acl.getACL(repoName).protectedBranches.length, 2)
+    t.is(acl.getACL(repoName).protectedBranches.length, 3)
   })
 
   test('removeProtectedBranch', async t => {
     acl.removeProtectedBranch(repoName, 'branch1')
-    t.is(acl.getACL(repoName).protectedBranches.length, 1)
+    t.is(acl.getACL(repoName).protectedBranches.length, 2)
   })
 
   test('getAdmins', async t => {

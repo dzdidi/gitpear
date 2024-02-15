@@ -51,13 +51,13 @@ test('git - uploadPack (w have)', { skip: true }, async t => {
 })
 
 test('git - createBareRepo', async t => {
-  t.absent(fs.existsSync(path.join(home.APP_HOME, 'test-git', 'code')))
+  t.absent(fs.existsSync(path.join(home.APP_HOME, 'test-git')))
   home.createAppFolder('test-git')
 
-  t.absent(fs.existsSync(path.join(home.APP_HOME, 'test-git', 'code', 'HEAD')))
+  t.absent(fs.existsSync(path.join(home.APP_HOME, 'test-git', 'HEAD')))
   await git.createBareRepo('test-git')
 
-  t.ok(fs.existsSync(path.join(home.APP_HOME, 'test-git', 'code', 'HEAD')))
+  t.ok(fs.existsSync(path.join(home.APP_HOME, 'test-git', 'HEAD')))
 
   t.teardown(() => {
     fs.rmSync(path.join(home.APP_HOME, 'test-git'), { recursive: true })
