@@ -64,9 +64,9 @@ async function createBareRepo (name) {
   return await doGit(init)
 }
 
-async function addRemote (name) {
+async function addRemote (name, opts = { quiet: false }) {
   const init = spawn('git', ['remote', 'add', 'pear', getCodePath(name)])
-  return await doGit(init)
+  return await doGit(init, opts)
 }
 
 async function push (branch = 'master', force = false) {
@@ -76,8 +76,8 @@ async function push (branch = 'master', force = false) {
   return await doGit(push)
 }
 
-async function doGit (child) {
-  child.stderr.pipe(process.stderr)
+async function doGit (child, opts = { quiet: false }) {
+  if (!opts.quiet) child.stderr.pipe(process.stderr)
   return new Promise((resolve, reject) => {
     child.on('close', (code) => {
       if (code) {
@@ -229,5 +229,5 @@ module.exports = {
   addRemote,
   push,
   getCommit,
-  getCurrentBranch,
+  getCurrentBranch
 }

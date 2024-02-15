@@ -56,7 +56,7 @@ test('e2e', async t => {
 
     await drive.core.update({ wait: true })
 
-    payload = Buffer.from(JSON.stringify({ body: { url, method: 'get-refs', data: repoName }}))
+    payload = Buffer.from(JSON.stringify({ body: { url, method: 'get-refs', data: repoName } }))
     const refsRes = await rpc.request('get-refs', payload)
     t.ok(refsRes)
 

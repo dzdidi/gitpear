@@ -38,13 +38,13 @@ All data will be persisted in application directory (default `~/.gitpear`). To c
 
 * `git pear daemon <-s, --start | -k, --stop>` - start or stop daemon
 * `git pear key` - print out public key. Share it with your peers so that they can do `git pull pear:<public key>/<repo name>`
-* `git pear init <path> [-s, --share [branch]]` - It will create [bare repository](https://git-scm.com/docs/git-init#Documentation/git-init.txt---bare) of the same name in application directory (default ~/.gitpear/<repository name>). It will add [git remote](https://git-scm.com/docs/git-remote) in current repository with name `pear`. So just like in traditional flow doing `git push orign`, here we do `git push pear`. By default repository will not be shared. To enable sharing provide `-s | --share [branch]` (default branch to share is current) or call `gitpear share <path>` later
-* `git pear share [-p, --path [path (default: ".")]> [-b, --branch [branch name (default: "_current_")] [-v, --visibility <private|public> (default: "public")]` - share repository, if branch is not specified, default branch will be shared
-* `git pear unshare <path>` -  stop sharing repository
+* `git pear init [-s, --share [branch]]` - It will create [bare repository](https://git-scm.com/docs/git-init#Documentation/git-init.txt---bare) of the same name in application directory (default ~/.gitpear/<repository name>). It will add [git remote](https://git-scm.com/docs/git-remote) in current repository with name `pear`. So just like in traditional flow doing `git push orign`, here we do `git push pear`. By default repository will not be shared. To enable sharing provide `-s | --share [branch]` (default branch to share is current) or call `gitpear share` later
+* `git pear share [-b, --branch [branch name (default: "_current_")] [-v, --visibility <private|public> (default: "public")]` - share current repository, if branch is not specified, default branch will be shared
+* `git pear unshare` -  stop sharing current repository
 * `git pear list [-s, --shared]` - list all or (only shared) repositories
 * `git pear list <url>` - list repositories of a peer
 
-### ACL (for authenticated access to enable support of PUSH)
+### User Access and Branch Protection Rules (for authenticated access to enable support of PUSH)
 
 Support of `push` capabilities only enabled for authenticated users. Currently supported authentications are based on:
 * [noise](https://github.com/libp2p/specs/blob/master/noise/README.md);
@@ -62,22 +62,26 @@ or
 GIT_PEAR_AUTH=native git pear daemon -s 
 ```
 
+#### User Access Control
+
 To manage access to repository use one or combination of the following commands, if `path` is not provide the command will be executed in the current directory. For `userId` use [NIP19 npub](https://github.com/nostr-protocol/nips/blob/master/19.md).
 
-* `git pear acl [command] <path>` - ACL managegement
-* `git pear acl list [userId] <path>` - list repository visitbility and user's role (or roles of all users if userId is not provided)
-* `git pear acl add <userId:role> <path>` - add user as a "role" to repository, available roles are `viewer`, `contributor`, `admin`. Roles exaplained:
-  * `viewer` - can read all branches;
-  * `contributor` - can edit all branches except protected (default master) 
-  * `admin` - can edit protected branches
-* `git pear acl remove <userId> <path>` - revoke use access to repository
+* `git pear acl -u [command] -p <repo path or url (default ".")>` - ACL managegement of for users access in local or remote repo (requires `owner` permission for remote repositories)
+  * `git pear acl -u list [userId] -p <repo path or url (default ".")>` - list repository visitbility and user's role (or roles of all users if userId is not provided)
+  * `git pear acl add -u <userId:role> -p <repo path or url (default ".")>` - add user as a "role" to repository available roles are `viewer`, `contributor`, `admin`, `owner`. Roles exaplained:
+    * `viewer` - can read all branches;
+    * `contributor` - can edit all branches except protected (default master) 
+    * `admin` - can edit protected branches
+    * `owner` - can edit repo ack
+  * `git pear acl remove -u| <userId> -p <repo path or url (default ".")>` - revoke use access to repository.
 
 
 ### Branch protection rules
 It is possible to setup basic branch protection rules (master is proteted by default).
-* `git pear branch`, same as `git pear branch list .` - list protection rules
-* `git pear branch add <branch name> <repo path>` - mark branch as protected (defatul repo path is ".")
-* `git pear branch remove <branch name> <repo path>` - unmark branch as protected
+* `git pear acl -b [command] -p <repo path or url (deafult ".")`, same as `git pear branch list` - list protection rules
+  * `git pear acl -b list` -  git pear branch list .` - list protection rules;
+  * `git pear acl -b add <branchName> <repo path or url (default ".")>` - mark branch as protected;
+  * `git pear acl -b remove <branchName> <repo path or url (deafult ".")>` - unmark branch as protected;
 
 # Examples of usage
 
@@ -128,7 +132,7 @@ git pull
 
 ## Authenticated usage example (push) - at your own risk
 
-Collaboration is possible with the following flow between Carol and David in a peer-to-peer manner.
+Collaboration is possible with the following flow between Carol and Dave in a peer-to-peer manner.
 
 Supported authentication methods are `native` and `nip98`. The `nip98` authentication, requires environment variable `GIT_PEAR_AUTH_NSEC` with nsec
 
@@ -138,12 +142,12 @@ Supported authentication methods are `native` and `nip98`. The `nip98` authentic
 2. Go to repository
 * `cd repo`
 3. Initialize git pear repository
-* `git pear init .`
+* `git pear init`
 4. Share repository wit hviben visibility () - (default is `public`)
-* `git pear share . public`
-5. Add Daviv as a `contirbutor`.
-6. List David's npub as a contributor
-* `git pear acl add <David pub key hex>:contributor`
+* `git pear share public`
+5. Add Dave as a `contirbutor`.
+6. List Dave's npub as a contributor
+* `git pear acl add <Dave pub key hex>:contributor`
 7. Retreive repo url and share it with Dave
 * `git pear list -s`
 
