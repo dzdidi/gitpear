@@ -8,7 +8,7 @@ const auth = require('../auth')
 
 const { printACL, printACLForUser, logBranches } = require('../utils')
 
-async function list(url, name, rpc, opts) {
+async function list (url, name, rpc, opts) {
   const payload = { body: { url, method: 'get-acl' } }
   if (process.env.GIT_PEAR_AUTH && process.env.GIT_PEAR_AUTH !== 'native') {
     payload.header = await auth.getToken(payload.body)
@@ -20,15 +20,15 @@ async function list(url, name, rpc, opts) {
   process.exit(0)
 }
 
-function listACLUser(repoACL, u) {
+function listACLUser (repoACL, u) {
   u ? printACLForUser(repoACL, u) : printACL(repoACL)
 }
 
-function listACLBranch(repoACL) {
+function listACLBranch (repoACL) {
   logBranches(repoACL)
 }
 
-async function add(url, name, rpc, opts) {
+async function add (url, name, rpc, opts) {
   const payload = { body: { url, method: 'add-acl', name } }
   if (opts.branch) payload.body.branch = true
 
@@ -42,7 +42,7 @@ async function add(url, name, rpc, opts) {
   process.exit(0)
 }
 
-async function del(url, name, rpc, opts) {
+async function del (url, name, rpc, opts) {
   const payload = { body: { url, method: 'del-acl', name } }
   if (opts.branch) payload.body.branch = true
 
@@ -84,7 +84,7 @@ async function wrapper (url, name, opts = {}, cb) {
   swarm.on('connection', async (socket) => {
     const rpc = new ProtomuxRPC(socket)
 
-    let payload = { body: { url, method: 'get-repos' } }
+    const payload = { body: { url, method: 'get-repos' } }
     if (!process.env.GIT_PEAR_AUTH) {
       console.debug('Retreiving data using un-authenticated access')
     } else {
@@ -112,5 +112,5 @@ async function wrapper (url, name, opts = {}, cb) {
 module.exports = {
   list: (url, name, opts) => wrapper(url, name, opts, list),
   add: (url, name, opts) => wrapper(url, name, opts, add),
-  remove: (url, name, opts) => wrapper(url, name, opts, del),
+  remove: (url, name, opts) => wrapper(url, name, opts, del)
 }

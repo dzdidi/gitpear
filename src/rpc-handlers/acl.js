@@ -2,14 +2,14 @@ const ACL = require('../acl')
 const home = require('../home')
 
 async function getACLHandler (publicKey, req) {
-  const { repoName, userId, acl } = await parseACLRequest.bind(this)(publicKey, req)
+  const { repoName } = await parseACLRequest.bind(this)(publicKey, req)
   const repoACL = ACL.getACL(repoName)
 
   return Buffer.from(JSON.stringify(repoACL))
 }
 
 async function addACLHandler (publicKey, req) {
-  const { repoName, userId, acl, isBranch, name } = await parseACLRequest.bind(this)(publicKey, req)
+  const { repoName, isBranch, name } = await parseACLRequest.bind(this)(publicKey, req)
 
   isBranch ? ACL.addProtectedBranch(repoName, name) : ACL.grantAccessToUser(repoName, ...name.split(':'))
 
@@ -18,7 +18,7 @@ async function addACLHandler (publicKey, req) {
 }
 
 async function delACLHandler (publicKey, req) {
-  const { repoName, userId, acl, isBranch, name } = await parseACLRequest.bind(this)(publicKey, req)
+  const { repoName, isBranch, name } = await parseACLRequest.bind(this)(publicKey, req)
 
   isBranch ? ACL.removeProtectedBranch(repoName, name) : ACL.revokeAccessFromUser(repoName, name)
 
@@ -26,7 +26,7 @@ async function delACLHandler (publicKey, req) {
   return Buffer.from(JSON.stringify(repoACL))
 }
 
-async function parseACLRequest(publicKey, req) {
+async function parseACLRequest (publicKey, req) {
   if (!req) throw new Error('Request is empty')
   const request = JSON.parse(req.toString())
   const userId = await this.authenticate(publicKey, request)
@@ -42,12 +42,12 @@ async function parseACLRequest(publicKey, req) {
     name: request.body.name,
     userId,
     acl: request.body.acl,
-    isBranch: !!request.body.branch,
+    isBranch: !!request.body.branch
   }
 }
 
 module.exports = {
   getACLHandler,
   addACLHandler,
-  delACLHandler,
+  delACLHandler
 }

@@ -6,7 +6,6 @@ const commander = require('commander')
 const program = new commander.Command()
 
 const path = require('path')
-const fs = require('fs')
 
 const home = require('./home')
 const acl = require('./acl')
@@ -25,10 +24,9 @@ program
 program
   .command('init')
   .description('initialize a gitpear repo')
-  .option('-p, --path [path]', 'paht to the git repo', '.')
   .option('-s, --share [branch]', 'share the repo as public, default false, default branch is current', '')
   .action(async (options) => {
-    const fullPath = path.resolve(options.path)
+    const fullPath = path.resolve('.')
     checkIfGitRepo(fullPath)
 
     const name = fullPath.split(path.sep).pop()
@@ -42,7 +40,7 @@ program
     }
 
     try {
-      home.createAppFolder(name) 
+      home.createAppFolder(name)
       console.log(`Added project "${name}" to gitpear`)
     } catch (e) { }
     try {
@@ -67,9 +65,8 @@ program
   .description('share a gitpear repo')
   .option('-b, --branch [b]', 'branch to share, default is current branch', '')
   .option('-v, --visibility [v]', 'visibility of the repo', 'public')
-  .option('-p, --path [path]', 'path to the repo', '.')
   .action(async (options) => {
-    const fullPath = path.resolve(options.path)
+    const fullPath = path.resolve('.')
     checkIfGitRepo(fullPath)
 
     const name = fullPath.split(path.sep).pop()
@@ -115,7 +112,6 @@ program
       }
     }
   })
-  
 
 program
   .command('unshare')
@@ -184,7 +180,7 @@ program
         opts.stdio = 'inherit'
       } else {
         opts.detached = true
-        opts.stdio = [ 'ignore', home.getOutStream(), home.getErrStream() ]
+        opts.stdio = ['ignore', home.getOutStream(), home.getErrStream()]
       }
 
       const daemon = spawn('git-peard', opts)
@@ -211,7 +207,7 @@ program
     }
   })
 
-function localBranchProtectionRules(a, b, p, options) {
+function localBranchProtectionRules (a, b, p, options) {
   const fullPath = path.resolve(p)
   checkIfGitRepo(fullPath)
 
@@ -238,8 +234,7 @@ function localBranchProtectionRules(a, b, p, options) {
   }
 }
 
-function localACL(a, u, p, options) {
-  console.log('localACL', { a, u, p, options })
+function localACL (a, u, p, options) {
   const fullPath = path.resolve(p)
   checkIfGitRepo(fullPath)
 
@@ -266,7 +261,7 @@ function localACL(a, u, p, options) {
       process.exit(1)
     }
 
-    const [ userId, role ] = u.split(':')
+    const [userId, role] = u.split(':')
     if (repoACL.ACL[userId]) {
       console.error(`${userId} already has access to ${name} as ${repoACL.ACL[userId]}`)
       process.exit(1)
@@ -290,11 +285,10 @@ function localACL(a, u, p, options) {
 
     acl.revokeAccessFromUser(name, u)
     console.log(`Removed ${u} from ${name}`)
-    return
   }
 }
 
-async function remoteBranchProtectionRules(a, b, p, options) {
+async function remoteBranchProtectionRules (a, b, p, options) {
   if (a === 'list') {
     await aclRemote.list(p, b, { branch: true })
   } else if (a === 'add') {
@@ -314,7 +308,7 @@ async function remoteBranchProtectionRules(a, b, p, options) {
   }
 }
 
-async function remoteACL(a, b, p, options) {
+async function remoteACL (a, b, p, options) {
   if (a === 'list') {
     await aclRemote.list(p, b)
   } else if (a === 'add') {
@@ -338,7 +332,7 @@ async function remoteACL(a, b, p, options) {
   }
 }
 
-async function share(name, branchToShare, options) {
+async function share (name, branchToShare, options) {
   let aclOptions
   let message = `Shared "${name}" project, ${branchToShare} branch`
   if (options?.visibility) {

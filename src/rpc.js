@@ -1,7 +1,4 @@
 const ProtomuxRPC = require('protomux-rpc')
-const SecretStream = require('@hyperswarm/secret-stream')
-const { spawn } = require('child_process')
-const home = require('./home')
 const auth = require('./auth')
 const { git, acl } = require('./rpc-handlers')
 
@@ -26,13 +23,13 @@ module.exports = class RPC {
 
     /* -- PULL HANDLERS -- */
     rpc.respond('get-repos', async req => await git.getReposHandler.bind(this)(socket.remotePublicKey, req))
-    rpc.respond('get-refs',  async req => await git.getRefsHandler.bind(this)(socket.remotePublicKey, req))
+    rpc.respond('get-refs', async req => await git.getRefsHandler.bind(this)(socket.remotePublicKey, req))
 
     if (!process.env.GIT_PEAR_AUTH) return
 
     /* -- PUSH HANDLERS -- */
-    rpc.respond('push',     async req => await git.pushHandler.bind(this)(socket.remotePublicKey, req))
-    rpc.respond('f-push',   async req => await git.forcePushHandler.bind(this)(socket.remotePublicKey, req))
+    rpc.respond('push', async req => await git.pushHandler.bind(this)(socket.remotePublicKey, req))
+    rpc.respond('f-push', async req => await git.forcePushHandler.bind(this)(socket.remotePublicKey, req))
     rpc.respond('d-branch', async req => await git.deleteBranchHandler.bind(this)(socket.remotePublicKey, req))
 
     /* -- REPO ADMINISTRATION HANDLERS -- */

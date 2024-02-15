@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-const { spawn } = require('child_process')
 const ProtomuxRPC = require('protomux-rpc')
 
 const RAM = require('random-access-memory')
@@ -13,8 +12,6 @@ const git = require('./git.js')
 const home = require('./home')
 const auth = require('./auth')
 const acl = require('./acl')
-
-const fs = require('fs')
 
 const url = process.argv[3]
 const matches = url.match(/pear:\/\/([a-f0-9]{64})\/(.*)/)
@@ -76,13 +73,13 @@ swarm.on('connection', async (socket) => {
 
   await drive.core.update({ wait: true })
 
-  payload = { body: { url, method: 'get-refs', data: repoName }}
+  payload = { body: { url, method: 'get-refs', data: repoName } }
   if (process.env.GIT_PEAR_AUTH && process.env.GIT_PEAR_AUTH !== 'native') {
     payload.header = await auth.getToken(payload.body)
   }
   const refsRes = await rpc.request('get-refs', Buffer.from(JSON.stringify(payload)))
 
-  let commit 
+  let commit
   try {
     commit = await git.getCommit()
   } catch (e) { }
@@ -99,20 +96,13 @@ async function talkToGit (refs, drive, repoName, rpc, commit) {
       process.stdout.write('push\n')
       process.stdout.write('fetch\n\n')
     } else if (chunk && chunk.search(/^push/) !== -1) {
-      const [_command, path] = chunk.split(' ')
+      const path = chunk.split(' ')[1]
       let [src, dst] = path.split(':')
 
       const isDelete = !src
       const isForce = src.startsWith('+')
 
       dst = dst.replace('refs/heads/', '').replace('\n\n', '')
-
-      try { home.createAppFolder(repoName) } catch (e) { }
-      try { await git.createBareRepo(repoName) } catch (e) { }
-      try { await git.addRemote(repoName) } catch (e) { }
-      try { await git.push(dst) } catch (e) { }
-      try { home.shareAppFolder(repoName) } catch (e) { }
-      try { acl.setACL(repoName, acl.getACL(repoName)) } catch (e) { }
 
       let method
       if (isDelete) {
@@ -128,16 +118,25 @@ async function talkToGit (refs, drive, repoName, rpc, commit) {
         method = 'push'
       }
 
+      try { home.createAppFolder(repoName) } catch (e) { }
+      try { await git.createBareRepo(repoName) } catch (e) { }
+      try { await git.addRemote(repoName, { quite: true }) } catch (e) { }
+      try { await git.push(dst, isForce) } catch (e) { }
+      try { home.shareAppFolder(repoName) } catch (e) { }
+      try { acl.setACL(repoName, acl.getACL(repoName)) } catch (e) { }
+
       const publicKey = home.readPk()
-      let payload = { body: {
-        url: `pear://${publicKey}/${repoName}`,
-        data: `${dst}#${commit}`,
-        method
-      } }
+      const payload = {
+        body: {
+          url: `pear://${publicKey}/${repoName}`,
+          data: `${dst}#${commit}`,
+          method
+        }
+      }
       if (process.env.GIT_PEAR_AUTH && process.env.GIT_PEAR_AUTH !== 'native') {
         payload.header = await auth.getToken(payload.body)
       }
-      const res = await rpc.request(method, Buffer.from(JSON.stringify(payload)))
+      await rpc.request(method, Buffer.from(JSON.stringify(payload)))
 
       process.stdout.write('\n\n')
       process.exit(0)

@@ -3,5 +3,5 @@ const aclRemote = require('./acl-remote')
 
 module.exports = {
   listRemote,
-  aclRemote,
+  aclRemote
 }

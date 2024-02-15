@@ -3,20 +3,20 @@ const fs = require('fs')
 
 const ROLES = {
   owner: {
-    description: 'Read and write to all branches, and ACL management',
+    description: 'Read and write to all branches, and ACL management'
   },
   admin: {
-    description: 'Read and write to all branches',
+    description: 'Read and write to all branches'
   },
   contributor: {
-    description: 'Read and write to all branches except protected ones',
+    description: 'Read and write to all branches except protected ones'
   },
   viewer: {
-    description: 'Read all branches',
-  },
+    description: 'Read all branches'
+  }
 }
 const DEFAULT_ACL = {
-  visibility: 'public', // public|private 
+  visibility: 'public', // public|private
   protectedBranches: ['master', 'main'],
   ACL: {}
 }
@@ -127,5 +127,5 @@ module.exports = {
   getAdmins,
   getContributors,
   getViewers,
-  revokeAccessFromUser,
+  revokeAccessFromUser
 }

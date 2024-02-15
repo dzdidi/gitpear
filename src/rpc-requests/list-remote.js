@@ -28,7 +28,7 @@ module.exports = async function listRemote (url) {
   swarm.on('connection', async (socket) => {
     const rpc = new ProtomuxRPC(socket)
 
-    let payload = { body: { url, method: 'get-repos' } }
+    const payload = { body: { url, method: 'get-repos' } }
     if (!process.env.GIT_PEAR_AUTH) {
       console.debug('Retreiving data using un-authenticated access')
     } else {
