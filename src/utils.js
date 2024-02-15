@@ -1,3 +1,5 @@
+const fs = require('fs')
+const path = require('path')
 
 function printACL(repoACL) {
   console.log('Repo Visibility:', '\t', repoACL.visibility)
@@ -16,7 +18,7 @@ function printACLForUser(repoACL, u) {
 
 function checkIfGitRepo(p) {
   if (!fs.existsSync(path.join(p, '.git'))) {
-    console.error('Not a git repo')
+    console.error(` ${p} is not a git repo`)
     process.exit(1)
   }
 }
