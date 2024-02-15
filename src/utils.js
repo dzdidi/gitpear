@@ -28,8 +28,6 @@ function logBranches(repoACL) {
   console.log('Protected Branch(s):', '\t', repoACL.protectedBranches.join(', '))
 }
 
-
-
 module.exports = {
   printACL,
   printACLForUser,
