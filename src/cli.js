@@ -25,10 +25,10 @@ program
 program
   .command('init')
   .description('initialize a gitpear repo')
-  .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
+  .option('-p, --path [path]', 'paht to the git repo', '.')
   .option('-s, --share [branch]', 'share the repo as public, default false, default branch is current', '')
-  .action(async (p, options) => {
-    const fullPath = path.resolve(p)
+  .action(async (options) => {
+    const fullPath = path.resolve(options.path)
     checkIfGitRepo(fullPath)
 
     const name = fullPath.split(path.sep).pop()
@@ -67,7 +67,7 @@ program
   .description('share a gitpear repo')
   .option('-b, --branch [b]', 'branch to share, default is current branch', '')
   .option('-v, --visibility [v]', 'visibility of the repo', 'public')
-  .option('-p, --path [p]', 'path to the repo', '.')
+  .option('-p, --path [path]', 'path to the repo', '.')
   .action(async (options) => {
     const fullPath = path.resolve(options.path)
     checkIfGitRepo(fullPath)
@@ -88,10 +88,10 @@ program
   .description('manage acl of a gitpear repo')
   .option('-u, --user', 'user to add/remove/list')
   .option('-b, --branch', 'branch to add/remove/list in protected branches')
+  .option('-p, --path [path]', 'path to the repo', '.')
   .addArgument(new commander.Argument('[a]', 'actiont to perform').choices(['add', 'remove', 'list']).default('list'))
   .addArgument(new commander.Argument('[n]', 'user or branch to add/remove/list').default(''))
-  .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
-  .action(async (a, n, p, options) => {
+  .action(async (a, n, options) => {
     if (options.user && options.branch) {
       throw new Error('Cannot perform both user and branch action at the same time')
     }
@@ -100,25 +100,18 @@ program
       throw new Error('Either user or branch option is required')
     }
 
-    if (n.startsWith('pear://')) {
-      let swap = n
-      n = p
-      p = swap
-    }
-
     if (options.user) {
-      if (p.startsWith('pear://')) {
+      if (options.path.startsWith('pear://')) {
         if (n === '.') n = ''
-        await remoteACL(a, n, p, options)
+        await remoteACL(a, n, options.path, options)
       } else {
-        localACL(a, n, p, options)
+        localACL(a, n, options.path, options)
       }
     } else if (options.branch) {
-      if (p.startsWith('pear://')) {
-        if (n === '.') n = ''
-        await remoteBranchProtectionRules(a, n, p, options)
+      if (options.path.startsWith('pear://')) {
+        await remoteBranchProtectionRules(a, n, options.path, options)
       } else {
-        localBranchProtectionRules(a, n, p, options)
+        localBranchProtectionRules(a, n, options.path, options)
       }
     }
   })
@@ -127,9 +120,9 @@ program
 program
   .command('unshare')
   .description('unshare a gitpear repo')
-  .addArgument(new commander.Argument('[p]', 'path to the repo').default('.'))
-  .action((p, options) => {
-    const fullPath = path.resolve(p)
+  .option('-p, --path [path]', 'path to the repo', '.')
+  .action((options) => {
+    const fullPath = path.resolve(options.path)
     checkIfGitRepo(fullPath)
 
     const name = fullPath.split(path.sep).pop()
@@ -246,6 +239,7 @@ function localBranchProtectionRules(a, b, p, options) {
 }
 
 function localACL(a, u, p, options) {
+  console.log('localACL', { a, u, p, options })
   const fullPath = path.resolve(p)
   checkIfGitRepo(fullPath)
 
