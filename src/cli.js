@@ -16,12 +16,14 @@ const { checkIfGitRepo } = require('./utils')
 const { remoteACL, share, remoteBranchProtectionRules, localACL, localBranchProtectionRules } = require('./cli-helpers')
 
 const pkg = require('../package.json')
-program
-  .name('gitpear')
+
+const gitPear = program
+  .name('git pear')
   .description('CLI to gitpear')
+  .usage('<command> [options]')
   .version(pkg.version)
 
-program
+const commandInit = gitPear
   .command('init')
   .description('initialize a gitpear repo')
   .option('-s, --share [branch]', 'share the repo as public, default false, default branch is current', '')
@@ -60,7 +62,7 @@ program
     if (options.share) await share(name, branchToShare)
   })
 
-program
+const commandShare = gitPear
   .command('share')
   .description('share a gitpear repo')
   .option('-b, --branch [b]', 'branch to share, default is current branch', '')
@@ -80,7 +82,7 @@ program
     await share(name, branchToShare, options)
   })
 
-program
+const commandACL = gitPear
   .command('acl')
   .description('manage acl of a gitpear repo')
   .option('-u, --user', 'user to add/remove/list')
@@ -89,13 +91,7 @@ program
   .addArgument(new commander.Argument('[a]', 'actiont to perform').choices(['add', 'remove', 'list']).default('list'))
   .addArgument(new commander.Argument('[n]', 'user or branch to add/remove/list').default(''))
   .action(async (a, n, options) => {
-    if (options.user && options.branch) {
-      throw new Error('Cannot perform both user and branch action at the same time')
-    }
-
-    if (!options.user && !options.branch) {
-      throw new Error('Either user or branch option is required')
-    }
+    if (options.user === options.branch) commandACL.help()
 
     if (options.user) {
       if (options.path.startsWith('pear://')) {
@@ -113,7 +109,7 @@ program
     }
   })
 
-program
+const commandUnshare = gitPear
   .command('unshare')
   .description('unshare a gitpear repo')
   .option('-p, --path [path]', 'path to the repo', '.')
@@ -133,7 +129,7 @@ program
     process.exit(1)
   })
 
-program
+const commandList = gitPear
   .command('list')
   .description('list all gitpear repos')
   .addArgument(new commander.Argument('[u]', 'url to remote pear').default(''))
@@ -146,28 +142,21 @@ program
     home.list(s).forEach(n => console.log(n, ...(s ? ['\t', `pear://${k}/${n}`] : [])))
   })
 
-program
+const commandKey = gitPear
   .command('key')
   .description('get a public key of gitpear')
   .action((p, options) => {
     console.log('Public key:', home.readPk())
   })
 
-program
+const commandDaemon = gitPear
   .command('daemon')
   .description('start/stop gitpear daemon')
   .option('-s, --start', 'start daemon')
   .option('-k, --stop', 'stop daemon')
   .option('-a, --attach', 'watch daemon logs')
   .action((p, options) => {
-    if (options.opts().start && options.opts().stop) {
-      console.error('Cannot start and stop daemon at the same time')
-      process.exit(1)
-    }
-    if (!options.opts().start && !options.opts().stop) {
-      console.error('Need either start or stop option')
-      process.exit(1)
-    }
+    if (options.opts().start === options.opts().stop) commandDaemon.help()
 
     if (options.opts().start) {
       if (home.getDaemonPid()) {
@@ -207,4 +196,4 @@ program
     }
   })
 
-program.parse()
+gitPear.parse()
