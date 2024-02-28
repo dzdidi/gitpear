@@ -15,7 +15,7 @@ async function getToken ({ url, method, data }) {
 // FIXME
 async function getId ({ payload, url, method, data }) {
   const event = JSON.parse(Buffer.from(payload, 'base64').toString())
-  const isValid = await nip98.validateEvent(event, url, method, data)
+  const isValid = await nip98.validateEvent(event, url, method, data, { skipTimestampValidation: true })
   if (!isValid) throw new Error('Invalid event')
   return {
     ...event,

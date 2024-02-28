@@ -15,7 +15,7 @@
         "corestore": "^6.15.13",
         "hyperdrive": "^11.6.3",
         "hyperswarm": "^4.7.13",
-        "nostr-tools": "^2.1.5",
+        "nostr-tools": "github:dzdidi/nostr-tools",
         "protomux-rpc": "^1.5.1",
         "random-access-memory": "^6.2.0"
       },
@@ -241,9 +241,9 @@
       }
     },
     "node_modules/@noble/ciphers": {
-      "version": "0.2.0",
-      "resolved": "https://registry.npmjs.org/@noble/ciphers/-/ciphers-0.2.0.tgz",
-      "integrity": "sha512-6YBxJDAapHSdd3bLDv6x2wRPwq4QFMUaB3HvljNBUTThDd12eSm7/3F+2lnfzx2jvM+S6Nsy0jEt9QbPqSwqRw==",
+      "version": "0.5.1",
+      "resolved": "https://registry.npmjs.org/@noble/ciphers/-/ciphers-0.5.1.tgz",
+      "integrity": "sha512-aNE06lbe36ifvMbbWvmmF/8jx6EQPu2HVg70V95T+iGjOuYwPpAccwAQc2HlXO2D0aiQ3zavbMga4jjWnrpiPA==",
       "funding": {
         "url": "https://paulmillr.com/funding/"
       }
@@ -3098,11 +3098,11 @@
       }
     },
     "node_modules/nostr-tools": {
-      "version": "2.1.5",
-      "resolved": "https://registry.npmjs.org/nostr-tools/-/nostr-tools-2.1.5.tgz",
-      "integrity": "sha512-Gug/j54YGQ0ewB09dZW3mS9qfXWFlcOQMlyb1MmqQsuNO/95mfNOQSBi+jZ61O++Y+jG99SzAUPFLopUsKf0MA==",
+      "version": "2.3.1",
+      "resolved": "git+ssh://git@github.com/dzdidi/nostr-tools.git#83e1286d5e88c55348835def60d5cac64f474228",
+      "license": "Unlicense",
       "dependencies": {
-        "@noble/ciphers": "0.2.0",
+        "@noble/ciphers": "^0.5.1",
         "@noble/curves": "1.2.0",
         "@noble/hashes": "1.3.1",
         "@scure/base": "1.1.1",
@@ -4958,9 +4958,9 @@
       }
     },
     "@noble/ciphers": {
-      "version": "0.2.0",
-      "resolved": "https://registry.npmjs.org/@noble/ciphers/-/ciphers-0.2.0.tgz",
-      "integrity": "sha512-6YBxJDAapHSdd3bLDv6x2wRPwq4QFMUaB3HvljNBUTThDd12eSm7/3F+2lnfzx2jvM+S6Nsy0jEt9QbPqSwqRw=="
+      "version": "0.5.1",
+      "resolved": "https://registry.npmjs.org/@noble/ciphers/-/ciphers-0.5.1.tgz",
+      "integrity": "sha512-aNE06lbe36ifvMbbWvmmF/8jx6EQPu2HVg70V95T+iGjOuYwPpAccwAQc2HlXO2D0aiQ3zavbMga4jjWnrpiPA=="
     },
     "@noble/curves": {
       "version": "1.2.0",
@@ -7161,11 +7161,10 @@
       "integrity": "sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA=="
     },
     "nostr-tools": {
-      "version": "2.1.5",
-      "resolved": "https://registry.npmjs.org/nostr-tools/-/nostr-tools-2.1.5.tgz",
-      "integrity": "sha512-Gug/j54YGQ0ewB09dZW3mS9qfXWFlcOQMlyb1MmqQsuNO/95mfNOQSBi+jZ61O++Y+jG99SzAUPFLopUsKf0MA==",
+      "version": "git+ssh://git@github.com/dzdidi/nostr-tools.git#83e1286d5e88c55348835def60d5cac64f474228",
+      "from": "nostr-tools@github:dzdidi/nostr-tools",
       "requires": {
-        "@noble/ciphers": "0.2.0",
+        "@noble/ciphers": "^0.5.1",
         "@noble/curves": "1.2.0",
         "@noble/hashes": "1.3.1",
         "@scure/base": "1.1.1",
