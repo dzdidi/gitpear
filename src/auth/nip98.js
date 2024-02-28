@@ -1,4 +1,4 @@
-const { nip98, nip19, finalizeEvent } = require('nostr-tools')
+const { nip98, nip19, finalizeEvent } = require('@dzdidi_restored/nostr-tools')
 
 async function getToken ({ url, method, data }) {
   if (!process.env.GIT_PEAR_AUTH_NSEC) throw new Error('Missing NSEC')
